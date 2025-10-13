@@ -1,8 +1,7 @@
 # Subset SCE object according to a condition
-subset_by_condition <- function(sce, condition, value) {
-  sce[, colData(sce)[[condition]] == value]
+subset_by_condition <- function(tibble, condition, value) {
+  tibble[tibble[[condition]] == value, ]
 }
-
 
 # helper: convert SCE to wide tibble with conf_group
 sce_to_wide_tibble <- function(sce,obs_condition) {

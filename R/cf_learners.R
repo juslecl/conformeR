@@ -46,10 +46,11 @@ prop_score <- function(proper_set, gene, gene_names, obs_condition){
 #'
 #' @return A fitted \code{ranger} object trained in quantile regression mode.
 train_qr <- function(data, gene, gene_names) {
-  print(data)
-  predictors <- setdiff(gene_names, gene)
-  formula <- as.formula(paste(make.names(gene), "~", paste(make.names(predictors), collapse = "+")))
-  ranger(formula, data = data, quantreg = TRUE)
+  ranger(
+    as.formula(paste(gene, "~", paste(gene_names[gene_names != gene], collapse = "+"))),
+    data = data,
+    quantreg = TRUE
+  )
 }
 
 
