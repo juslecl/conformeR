@@ -9,15 +9,12 @@
 #' @return A data frame with one row per \code{cell_id}-\code{gene}
 #'   combination, and a column \code{pvalue} giving the aggregated p-value.
 
-interval_to_pval <- function(interval_df){
-  pval_df <-interval_df |>
+interval_to_pval <- function(intervals_df){
+  pval_df <-intervals_df |>
     group_by(cell_id,conf_group,gene) |>
     summarise(
       pvalue = (1 + sum(covered)) / (1 + n()),
       .groups = "drop"
-    ) |>
-    mutate(gene = gene,
-           conf_group= conf_group) |>
-    select(-cell_id)
+    )
   return(pval_df)
 }

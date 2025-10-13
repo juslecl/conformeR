@@ -4,7 +4,7 @@
 \alias{interval_to_pval}
 \title{Convert conformal intervals to p-values}
 \usage{
-interval_to_pval(interval_df)
+interval_to_pval(intervals_df)
 }
 \arguments{
 \item{interval_df}{A data frame of prediction intervals as output by function \code{conformeR_cfcausal} or \code{conformeR_cf}}

@@ -9,7 +9,6 @@ conformeR(
   obs_condition,
   replicate_id,
   cell_type,
-  cf_method = c("conformeR", "cfcausal"),
   spacing = 0.01,
   size_train = 0.5,
   size_cal = 0.25,
@@ -28,9 +27,6 @@ gene expression data ("logcounts" assay).}
 
 \item{cell_type}{Character scalar. The name of the column in
 \code{colData(sce)} specifying cell types.}
-
-\item{cf_method}{Character scalar, either \code{"conformeR"} (default) or
-\code{"cfcausal"}. Determines which counterfactual method is used for interval estimation.}
 
 \item{spacing}{Numeric scalar. Grid spacing for prediction intervals computation.
 Default is \code{0.01}.}
@@ -68,7 +64,7 @@ library(SingleCellExperiment)
 sce <- mock_sce_object()  # example input
 res <- conformeR(sce, obs_condition="treatment",
                  replicate_id="patient_id", cell_type="celltype",
-                 cf_method="conformeR", cores=4)
+                 cores=4)
 }
 
 }

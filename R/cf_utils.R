@@ -23,21 +23,21 @@ eta_conformeR <-function(scores,weights_cal,weights_test,alphas){ # version 3.0 
   ord <- apply(scores, 2, order) # nrow(cal) x length(alphas)
   score_s <- apply(scores, 2, sort)
 
-  # Reorder weights (p_hat) according to score order for each alpha
-  p_hat_s <- lapply(seq_along(alphas), function(a) p_hat[ord[, a], , drop = FALSE])  # list of (n_cal x n_test) per alpha
-
-  # Cumulative sum of weights
-  cum_p_list <- lapply(p_hat_s, function(p) apply(p, 2, cumsum))  # list of (n_cal x n_test) matrices
-
-  # Compute quantiles per alpha
   eta_list <- lapply(seq_along(alphas), function(a) {
-    idx_first <- apply(cum_p_list[[a]], 2, function(col) which(col >= 1 - alphas[a])[1])
+    # 1. Reorder p_hat by ord for this alpha
+    p <- p_hat[ord[, a], , drop = FALSE]  # (n_cal x n_test)
 
-    # Fallback to weight at infinity if threshold not reached
-    eta <- ifelse(!is.na(idx_first), score_s[idx_first,a], p_hat_infty)
+    # 2. Cumulative sum of weights (columnwise)
+    cum_p <- apply(p, 2, cumsum)
+
+    # 3. Find first index where cumulative weight exceeds 1 - alpha
+    idx_first <- apply(cum_p, 2, function(col) which(col >= 1 - alphas[a])[1])
+
+    # 4. Compute eta with fallback
+    eta <- ifelse(!is.na(idx_first), score_s[idx_first, a], p_hat_infty)
+
     return(eta)
   })
-
   # Return as matrix: (n_test x n_alpha)
   do.call(cbind, eta_list)
 }
