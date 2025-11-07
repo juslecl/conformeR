@@ -92,7 +92,9 @@ conformeR <- function(sce,
       # Propensity score
       ps_model <- prop_score(rbind(gsets$T0, gsets$T1), gene, gene_names, obs_condition)
       ps_cal   <- predict(ps_model, rbind(gsets$C0, gsets$C1), type = "prob") |> pull(.pred_1)
-      ps_test <- predict(ps_model, gsets$Te, type = "prob") |> pull(.pred_1)
+      ps_test <- predict(ps_model, test, type = "prob") |> pull(.pred_1)
+      ps_test <- ifelse(ps_test==1,min(max(ps_test),1),ps_test)
+      ps_test <- ifelse(ps_test==0,1/nrow(test),ps_test)
       w_cal    <- (1 - ps_cal) / ps_cal
       w_test <- (1 - ps_test) / ps_test
       wC0      <- w_cal[1:nrow(gsets$C0)]
@@ -103,18 +105,18 @@ conformeR <- function(sce,
       scoresT1 <- compute_cqr_scores(qrT1, gsets$C1, gene, alphas)
 
       int0 <- build_intervals(
-        gsets$Te[idx0, , drop = FALSE],
-        qrT1, scoresT1, wC1, w_test[idx0],
-        alphas, gene, gene_names, 0)
+        gsets$Te, idx0,
+        qrT1, scoresT1, wC1, w_test,
+        alphas, gene, gene_names, 1)
 
       int1 <- build_intervals(
-        gsets$Te[idx1, , drop = FALSE],
-        qrT0, scoresT0, wC0, w_test[idx1],
+        gsets$Te, idx1,
+        qrT0, scoresT0, wC0, w_test,
         alphas, gene, gene_names, 0)
 
       int <- rbind(int0,int1) |>
         mutate(gene=gene) |>
-        mutate(covered = sign(lower)==sign(upper)) # gene x conf_group
+        mutate(covered = sign(lower)!=sign(upper)) # gene x conf_group
 
       tab_res <- fdr(int,g,gene,cutoff)
       tab_res
@@ -124,7 +126,6 @@ conformeR <- function(sce,
   }) # closes group loop
   # Combine all groups
   tab_res <- data.table::rbindlist(results)
-
   # Here compute combined FDR
   fdr_tab <- comb_fdr(tab_res)
   tab_res <- tab_res |> select(-c(covered,Rg,fdr))

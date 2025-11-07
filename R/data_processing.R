@@ -1,12 +1,12 @@
 #' 1) creation of conformal groups `conf_group`.
 #' 2) splitting of the original dataset using `initial_split` and balancing on `conf_group`.
 #'
-#' @importFrom SingleCellExperiment colData
+#' @importFrom SingleCellExperiment SummarizedExperiment::colData
 #' @importFrom dplyr group_indices mutate
 #' @importFrom rlang syms
 #' @importFrom rsample initial_split training testing
 #'
-#' @param sce SingleCellExperiment with replicate_id, obs_condition, cell_type in colData
+#' @param sce SingleCellExperiment with replicate_id, obs_condition, cell_type in SummarizedExperiment::colData
 #' @param replicate_id column name for biological replicate (string)
 #' @param obs_condition column name for observed condition (string)
 #' @param cell_type column name for cell types (string)
@@ -26,20 +26,20 @@ data_processing <- function(sce,
   set.seed(1234)
 
   # Ensure factors
-  colData(sce)[[replicate_id]] <- as.factor(colData(sce)[[replicate_id]])
-  colData(sce)[[obs_condition]] <- as.factor(colData(sce)[[obs_condition]])
-  colData(sce)[[cell_type]] <- as.factor(colData(sce)[[cell_type]])
+  SummarizedExperiment::colData(sce)[[replicate_id]] <- as.factor(SummarizedExperiment::colData(sce)[[replicate_id]])
+  SummarizedExperiment::colData(sce)[[obs_condition]] <- as.factor(SummarizedExperiment::colData(sce)[[obs_condition]])
+  SummarizedExperiment::colData(sce)[[cell_type]] <- as.factor(SummarizedExperiment::colData(sce)[[cell_type]])
 
   # Build conf_group
-  coldata_df <- as.data.frame(colData(sce)) |>
+  colData_df <- as.data.frame(SummarizedExperiment::colData(sce)) |>
     mutate(conf_group = factor(paste0(
       .data[[replicate_id]], " x ", .data[[cell_type]]
     )))
-  colData(sce)$conf_group <- coldata_df$conf_group
-  coldata_df$row <- seq_len(nrow(coldata_df))
+  SummarizedExperiment::colData(sce)$conf_group <- colData_df$conf_group
+  colData_df$row <- seq_len(nrow(colData_df))
 
   # Split into train/test
-  split1 <- initial_split(coldata_df, prop = size_train, strata = conf_group)
+  split1 <- initial_split(colData_df, prop = size_train, strata = conf_group)
   remaining <- training(split1)
   test_idx <- testing(split1)$row
 

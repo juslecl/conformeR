@@ -5,13 +5,13 @@ subset_by_condition <- function(tibble, condition, value) {
 
 # helper: convert SCE to wide tibble with conf_group
 sce_to_wide_tibble <- function(sce,obs_condition) {
-  meta_df <- as.data.frame(colData(sce)) %>%
+  meta_df <- as_tibble(SummarizedExperiment::colData(sce)) %>%
     select(conf_group, all_of(obs_condition))
 
-  expr_df <- as.data.frame(t(assay(sce,"logcounts")))  # transpose: rows=cells, cols=genes
+  expr_df <- as_tibble(t(SummarizedExperiment::assay(sce,"logcounts")))  # transpose: rows=cells, cols=genes
   colnames(expr_df) <- rownames(sce)
 
-  bind_cols(meta_df, expr_df) %>% as_tibble()
+  bind_cols(meta_df, expr_df)
 }
 
 # Derives p-values from confidence intervals
@@ -39,7 +39,7 @@ fdr <- function(int,group,gene,cutoff){
       qvalue::qvalue(pval, pi0 = pi0_manual)$lfdr
     }, error = function(e2) NULL)
   })
-  fdr_val <- ifelse(sum(pval < cutoff) == 0, 1, mean(lfdr[pval < cutoff]))
+  fdr_val <- ifelse(sum(pval < cutoff) == 0, 0, mean(lfdr[pval < cutoff]))
   Rg <- sum(pval <= cutoff)
   int <- int |> mutate(Rg=Rg,fdr=fdr_val)
   return(int)
@@ -58,10 +58,8 @@ comb_fdr <- function(tab_res){
     mutate(
       comb_fdr = if_else(
         sum(Rg) == 0,
-        mean(Rg * fdr, na.rm = TRUE),
-        sum(Rg * fdr, na.rm = TRUE) / sum(Rg, na.rm = TRUE)
-      ),
-      comb_fdr = if_else(Rg == 0, 1, comb_fdr)
-    )
+        mean(Rg * fdr),
+        sum(Rg * fdr) / sum(Rg)
+      ))
   fdr_tab
 }

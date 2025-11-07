@@ -86,11 +86,11 @@ compute_cqr_scores <- function(qr_model, data_cal, gene, alphas) { # vectorized 
 #' @param tr_flag Integer-vector flag (0 or 1) indicating treatment/control setting for each row of `test_data`
 #'
 #' @return A matrix with `nrow(test_data)*length(alphas)` with three columns ("lower","upper","cell_id","alpha").
-build_intervals <- function(test_data, qr_model, scores, weights_cal,
+build_intervals <- function(test_data, idx, qr_model, scores, weights_cal,
                             w_test, alphas, gene, gene_names, tr_flag) {
-
+  test_data <- test_data[idx, ]
   tr_flag <- rep(tr_flag, nrow(test_data)) # tr_flag = 0 or 1
-  eta_mat <- eta_conformeR(scores, weights_cal, w_test, alphas) # returns mat of dim nrow(test) x length(alphas)
+  eta_mat <- eta_conformeR(scores, weights_cal, w_test[idx], alphas) # returns mat of dim nrow(test) x length(alphas)
   # predict lower/upper quantiles for all test rows
   q_lo <- predict(qr_model, data = test_data, type = "quantiles",
                   quantiles = alphas/2)$predictions
@@ -100,7 +100,7 @@ build_intervals <- function(test_data, qr_model, scores, weights_cal,
   y_obs <- test_data[[gene]]
   lower <- tr_flag*(y_obs - q_hi - eta_mat) + (1-tr_flag)*(q_lo - eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
   upper <- tr_flag*(y_obs - q_lo + eta_mat) + (1-tr_flag)*(q_hi + eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
-  int <- cbind.data.frame(lower = c(lower), upper =  c(upper), cell_id = rep(paste(tr_flag,seq_len(nrow(test_data)),sep="."),length(alphas)), alpha=rep(alphas, each=nrow(test_data)))
+  int <- cbind.data.frame(lower = c(lower), upper =  c(upper), cell_id = rep(idx,length(alphas)), alpha=rep(alphas, each=nrow(test_data)))
   rownames(int) <- NULL
   int
 }
