@@ -50,6 +50,7 @@ eta_conformeR <-function(scores,weights_cal,weights_test,alphas){ # version 3.0 
 #' deviation of the observed outcome from the predicted lower and upper
 #' quantiles.
 #'
+#' @importFrom stats predict
 #' @param qr_model A quantile regression model fitted with conformalCQR.
 #' @param data_cal A data frame containing calibration covariates and outcomes.
 #' @param gene Character string giving the name of the target gene.
@@ -75,6 +76,7 @@ compute_cqr_scores <- function(qr_model, data_cal, gene, alphas) { # vectorized 
 #' counterfactual logcounts using weighted split-CQR. Vectorized: accepts
 #' multiple test rows at once.
 #'
+#' @importFrom stats predict
 #' @param test_data A data frame of test cells (rows = cells, cols = covariates).
 #' @param qr_model A quantile regression model fitted with conformalCQR.
 #' @param scores Numeric matrix of conformal scores with dimension `nrow(data_cal) x length(alphas)`.
@@ -98,8 +100,8 @@ build_intervals <- function(test_data, idx, qr_model, scores, weights_cal,
                   quantiles = 1 - alphas/2)$predictions
 
   y_obs <- test_data[[gene]]
-  lower <- tr_flag*(y_obs - q_hi - eta_mat) + (1-tr_flag)*(q_lo - eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
-  upper <- tr_flag*(y_obs - q_lo + eta_mat) + (1-tr_flag)*(q_hi + eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
+  lower <- (1-tr_flag)*(y_obs - q_hi - eta_mat) + tr_flag*(q_lo - eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
+  upper <- (1-tr_flag)*(y_obs - q_lo + eta_mat) + tr_flag*(q_hi + eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
   int <- cbind.data.frame(lower = c(lower), upper =  c(upper), cell_id = rep(idx,length(alphas)), alpha=rep(alphas, each=nrow(test_data)))
   rownames(int) <- NULL
   int

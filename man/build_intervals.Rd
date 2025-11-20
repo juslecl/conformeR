@@ -6,6 +6,7 @@
 \usage{
 build_intervals(
   test_data,
+  idx,
   qr_model,
   scores,
   weights_cal,

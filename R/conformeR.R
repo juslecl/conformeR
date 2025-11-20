@@ -3,9 +3,10 @@
 #' This function computes conformal prediction intervals and FDR-adjusted
 #' results for gene expression data stored in a
 #' \linkS4class{SingleCellExperiment} object. Results are aggregated at `cell_type` level.
-#' Two counterfactual-based methods
-#' are available: `"conformeR"` (default) and `"cfcausal"`.
 #'
+#' @importFrom BiocParallel MulticoreParam bplapply
+#' @importFrom dplyr mutate select pull
+#' @importFrom stats predict
 #' @param sce A \linkS4class{SingleCellExperiment} object containing
 #'   gene expression data ("logcounts" assay).
 #' @param obs_condition Character scalar. The name of the column in
@@ -25,12 +26,9 @@
 #'
 #' @return A list with the following components:
 #' \describe{
-#'   \item{pred_intervals}{A data.frame of conformal prediction intervals
+#'   \item{INT}{A tibble of conformal prediction intervals
 #'     for each gene x cell x level of confidence.}
-#'   \item{conformeR_pvalues}{A data.frame containing per-gene x cell p-values.}
-#'   \item{gene_fdr_fun}{A list of FDR estimation functions,
-#'     one per gene × conformal group.}
-#'   \item{comb_fdr}{A tibble summarizing combined FDR per gene.}
+#'   \item{FDR}{A tibble summarizing combined FDR per gene and cell_type.}
 #' }
 #'
 #' @examples

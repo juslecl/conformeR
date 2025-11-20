@@ -4,8 +4,8 @@
 #' observed logcounts except the gene of interest. The model is estimated
 #' with a random forest classifier from the \pkg{ranger} engine.
 #'
-#' @import workflows
-#' @import parsnip
+#' @importFrom parsnip rand_forest set_engine set_mode
+#' @importFrom workflows workflow add_formula add_model fit
 #'
 #' @param proper_set A data frame containing predictors (logcounts) and the
 #'   treatment indicator \code{Tr}.

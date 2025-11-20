@@ -1,12 +1,12 @@
 #' 1) creation of conformal groups `conf_group`.
 #' 2) splitting of the original dataset using `initial_split` and balancing on `conf_group`.
 #'
-#' @importFrom SingleCellExperiment SummarizedExperiment::colData
-#' @importFrom dplyr group_indices mutate
-#' @importFrom rlang syms
+#' @importFrom SummarizedExperiment colData
+#' @importFrom dplyr mutate
+#' @importFrom rlang .data
 #' @importFrom rsample initial_split training testing
 #'
-#' @param sce SingleCellExperiment with replicate_id, obs_condition, cell_type in SummarizedExperiment::colData
+#' @param sce SingleCellExperiment with replicate_id, obs_condition, cell_type in colData
 #' @param replicate_id column name for biological replicate (string)
 #' @param obs_condition column name for observed condition (string)
 #' @param cell_type column name for cell types (string)
@@ -26,16 +26,16 @@ data_processing <- function(sce,
   set.seed(1234)
 
   # Ensure factors
-  SummarizedExperiment::colData(sce)[[replicate_id]] <- as.factor(SummarizedExperiment::colData(sce)[[replicate_id]])
-  SummarizedExperiment::colData(sce)[[obs_condition]] <- as.factor(SummarizedExperiment::colData(sce)[[obs_condition]])
-  SummarizedExperiment::colData(sce)[[cell_type]] <- as.factor(SummarizedExperiment::colData(sce)[[cell_type]])
+colData(sce)[[replicate_id]] <- as.factor(colData(sce)[[replicate_id]])
+colData(sce)[[obs_condition]] <- as.factor(colData(sce)[[obs_condition]])
+colData(sce)[[cell_type]] <- as.factor(colData(sce)[[cell_type]])
 
   # Build conf_group
-  colData_df <- as.data.frame(SummarizedExperiment::colData(sce)) |>
+  colData_df <- as.data.frame(colData(sce)) |>
     mutate(conf_group = factor(paste0(
       .data[[replicate_id]], " x ", .data[[cell_type]]
     )))
-  SummarizedExperiment::colData(sce)$conf_group <- colData_df$conf_group
+colData(sce)$conf_group <- colData_df$conf_group
   colData_df$row <- seq_len(nrow(colData_df))
 
   # Split into train/test
