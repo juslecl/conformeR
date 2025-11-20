@@ -11,7 +11,7 @@ interval_to_pval(intervals_df)
 and a logical column \code{covered} indicating whether the interval includes the value.}
 }
 \value{
-A tibble with one row per \verb{(cell_id, conf_group, gene)} and a p-value.
+A tibble with one row per \code{cell_id} and a p-value.
 }
 \description{
 Computes p-values from conformal prediction intervals.

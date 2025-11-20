@@ -13,13 +13,13 @@
 #' @param gene_names Character vector of all gene names.
 #'
 #' @return A fitted workflow object containing the trained propensity score model.
-prop_score <- function(proper_set, gene, gene_names, obs_condition){
-  model_prop_score <-
-    rand_forest() |>
+#' @export
+prop_score <- function(proper_set, gene, gene_names, obs_condition) {
+  model_prop_score <- rand_forest() |>
     set_engine("ranger") |>
     set_mode("classification")
 
-  # Build formula dynamically with the actual treatment column
+  # Build formula dynamically
   response <- paste0("as.factor(", obs_condition, ")")
   predictors <- paste(gene_names[gene_names != gene], collapse = " + ")
   f <- as.formula(paste(response, "~", predictors))
@@ -45,12 +45,14 @@ prop_score <- function(proper_set, gene, gene_names, obs_condition){
 #' @param gene_names Character vector of all gene names.
 #'
 #' @return A fitted \code{ranger} object trained in quantile regression mode.
+#' @export
 train_qr <- function(data, gene, gene_names) {
   ranger(
-    as.formula(paste(gene, "~", paste(gene_names[gene_names != gene], collapse = "+"))),
+    formula = as.formula(
+      paste(gene, "~", paste(gene_names[gene_names != gene], collapse = "+"))
+    ),
     data = data,
     quantreg = TRUE
   )
 }
-
 

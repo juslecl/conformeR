@@ -9,36 +9,22 @@
 #' @param alphas Numeric vector of miscoverage levels in (0,1).
 #'
 #' @return A numeric matrix giving the conformal threshold \eqn{\eta(x)} with dimension `nrow(data_cal) x length(alphas)`.
-eta_conformeR <-function(scores,weights_cal,weights_test,alphas){ # version 3.0 vectorize over alpha
+#' @export
+eta_conformeR <- function(scores, weights_cal, weights_test, alphas) {
+  denom <- sum(weights_cal) + weights_test
+  p_hat <- weights_cal %*% t(1 / denom)
+  p_hat_infty <- weights_test / denom
 
-  # Weight's normalization
-  denom <- sum(weights_cal)+weights_test # \perp alpha
-  # Normalized calibration weights
-  p_hat <- weights_cal%*%t(1/denom)# nrow(cal) x nrow(test) # \perp alpha
-
-  # Weight at infinity
-  p_hat_infty <- weights_test/denom # \perp alpha
-
-  # Work col-wise across alpha
-  ord <- apply(scores, 2, order) # nrow(cal) x length(alphas)
+  ord <- apply(scores, 2, order)
   score_s <- apply(scores, 2, sort)
 
   eta_list <- lapply(seq_along(alphas), function(a) {
-    # 1. Reorder p_hat by ord for this alpha
-    p <- p_hat[ord[, a], , drop = FALSE]  # (n_cal x n_test)
-
-    # 2. Cumulative sum of weights (columnwise)
+    p <- p_hat[ord[, a], , drop = FALSE]
     cum_p <- apply(p, 2, cumsum)
-
-    # 3. Find first index where cumulative weight exceeds 1 - alpha
     idx_first <- apply(cum_p, 2, function(col) which(col >= 1 - alphas[a])[1])
-
-    # 4. Compute eta with fallback
     eta <- ifelse(!is.na(idx_first), score_s[idx_first, a], p_hat_infty)
-
-    return(eta)
+    eta
   })
-  # Return as matrix: (n_test x n_alpha)
   do.call(cbind, eta_list)
 }
 
@@ -57,6 +43,7 @@ eta_conformeR <-function(scores,weights_cal,weights_test,alphas){ # version 3.0 
 #' @param alphas Numeric vector of miscoverage levels in (0,1).
 #'
 #' @return A numeric matrix of conformal scores with dimension `nrow(data_cal) x length(alphas)`.
+#' @export
 compute_cqr_scores <- function(qr_model, data_cal, gene, alphas) { # vectorized version
 
   # Predict lower and upper quantiles
@@ -88,21 +75,27 @@ compute_cqr_scores <- function(qr_model, data_cal, gene, alphas) { # vectorized 
 #' @param tr_flag Integer-vector flag (0 or 1) indicating treatment/control setting for each row of `test_data`
 #'
 #' @return A matrix with `nrow(test_data)*length(alphas)` with three columns ("lower","upper","cell_id","alpha").
+#' @export
+
 build_intervals <- function(test_data, idx, qr_model, scores, weights_cal,
                             w_test, alphas, gene, gene_names, tr_flag) {
   test_data <- test_data[idx, ]
-  tr_flag <- rep(tr_flag, nrow(test_data)) # tr_flag = 0 or 1
-  eta_mat <- eta_conformeR(scores, weights_cal, w_test[idx], alphas) # returns mat of dim nrow(test) x length(alphas)
-  # predict lower/upper quantiles for all test rows
-  q_lo <- predict(qr_model, data = test_data, type = "quantiles",
-                  quantiles = alphas/2)$predictions
-  q_hi <- predict(qr_model, data = test_data, type = "quantiles",
-                  quantiles = 1 - alphas/2)$predictions
+  tr_flag <- rep(tr_flag, nrow(test_data))
+  eta_mat <- eta_conformeR(scores, weights_cal, w_test[idx], alphas)
+
+  q_lo <- predict(qr_model, data = test_data, type = "quantiles", quantiles = alphas/2)$predictions
+  q_hi <- predict(qr_model, data = test_data, type = "quantiles", quantiles = 1 - alphas/2)$predictions
 
   y_obs <- test_data[[gene]]
-  lower <- (1-tr_flag)*(y_obs - q_hi - eta_mat) + tr_flag*(q_lo - eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
-  upper <- (1-tr_flag)*(y_obs - q_lo + eta_mat) + tr_flag*(q_hi + eta_mat - y_obs) # mat of dim nrow(test) x length(alphas)
-  int <- cbind.data.frame(lower = c(lower), upper =  c(upper), cell_id = rep(idx,length(alphas)), alpha=rep(alphas, each=nrow(test_data)))
-  rownames(int) <- NULL
-  int
+  lower <- (1-tr_flag)*(y_obs - q_hi - eta_mat) + tr_flag*(q_lo - eta_mat - y_obs)
+  upper <- (1-tr_flag)*(y_obs - q_lo + eta_mat) + tr_flag*(q_hi + eta_mat - y_obs)
+
+  as_tibble(
+    cbind(
+      lower = c(lower),
+      upper = c(upper),
+      cell_id = rep(idx, length(alphas)),
+      alpha = rep(alphas, each = nrow(test_data))
+    )
+  )
 }

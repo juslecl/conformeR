@@ -16,29 +16,23 @@
 #' @return list with original sce, proper training, calibration, and test sets
 #' @export
 
-data_processing <- function(sce,
-                            replicate_id,
-                            obs_condition,
-                            cell_type,
-                            size_train = 0.5,
-                            size_cal = 0.25) {
+data_processing <- function(sce, replicate_id, obs_condition, cell_type,
+                            size_train = 0.5, size_cal = 0.25) {
+
   stopifnot(is(sce, "SingleCellExperiment"))
   set.seed(1234)
 
-  # Ensure factors
-colData(sce)[[replicate_id]] <- as.factor(colData(sce)[[replicate_id]])
-colData(sce)[[obs_condition]] <- as.factor(colData(sce)[[obs_condition]])
-colData(sce)[[cell_type]] <- as.factor(colData(sce)[[cell_type]])
+  colData(sce)[[replicate_id]] <- as.factor(colData(sce)[[replicate_id]])
+  colData(sce)[[obs_condition]] <- as.factor(colData(sce)[[obs_condition]])
+  colData(sce)[[cell_type]] <- as.factor(colData(sce)[[cell_type]])
 
-  # Build conf_group
   colData_df <- as.data.frame(colData(sce)) |>
-    mutate(conf_group = factor(paste0(
-      .data[[replicate_id]], " x ", .data[[cell_type]]
-    )))
-colData(sce)$conf_group <- colData_df$conf_group
+    dplyr::mutate(
+      conf_group = factor(paste0(.data[[replicate_id]], " x ", .data[[cell_type]]))
+    )
+  colData(sce)$conf_group <- colData_df$conf_group
   colData_df$row <- seq_len(nrow(colData_df))
 
-  # Split into train/test
   split1 <- initial_split(colData_df, prop = size_train, strata = conf_group)
   remaining <- training(split1)
   test_idx <- testing(split1)$row
@@ -49,7 +43,7 @@ colData(sce)$conf_group <- colData_df$conf_group
     test_set <- sce[, test_idx]
     return(list(
       train_set = sce_to_wide_tibble(train_set, obs_condition),
-      test_set  = sce_to_wide_tibble(test_set, obs_condition)
+      test_set = sce_to_wide_tibble(test_set, obs_condition)
     ))
   } else {
     split2 <- initial_split(remaining, prop = 1 - size_cal, strata = conf_group)
@@ -62,8 +56,8 @@ colData(sce)$conf_group <- colData_df$conf_group
 
     return(list(
       train_set = sce_to_wide_tibble(train_set, obs_condition),
-      cal_set   = sce_to_wide_tibble(cal_set,obs_condition),
-      test_set  = sce_to_wide_tibble(test_set, obs_condition)
+      cal_set = sce_to_wide_tibble(cal_set, obs_condition),
+      test_set = sce_to_wide_tibble(test_set, obs_condition)
     ))
   }
 }

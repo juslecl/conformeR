@@ -29,13 +29,11 @@ subset_by_condition <- function(tibble, condition, value) {
 #' @return A tibble in wide format, with cells as rows and genes, `colData` as columns.
 #' @export
 
-sce_to_wide_tibble <- function(sce,obs_condition) {
-  meta_df <- as_tibble(SummarizedExperiment::colData(sce)) %>%
+sce_to_wide_tibble <- function(sce, obs_condition) {
+  meta_df <- as_tibble(colData(sce)) |>
     select(conf_group, all_of(obs_condition))
-
-  expr_df <- as_tibble(t(SummarizedExperiment::assay(sce,"counts")))  # transpose: rows=cells, cols=genes
+  expr_df <- as_tibble(t(assay(sce, "counts")))
   colnames(expr_df) <- rownames(sce)
-
   bind_cols(meta_df, expr_df)
 }
 
@@ -50,18 +48,17 @@ sce_to_wide_tibble <- function(sce,obs_condition) {
 #' @param intervals_df A tibble with columns `cell_id`, `conf_group`, `gene`,
 #'   and a logical column `covered` indicating whether the interval includes the value.
 #'
-#' @return A tibble with one row per `(cell_id, conf_group, gene)` and a p-value.
+#' @return A tibble with one row per `cell_id` and a p-value.
 #' @export
 
-interval_to_pval <- function(intervals_df){
-  pval_df <-intervals_df |>
-    group_by(cell_id,conf_group,gene) |>
+interval_to_pval <- function(intervals_df) {
+  group_by(intervals_df, cell_id) |>
     summarise(
       pvalue = (1 + sum(covered)) / (1 + n()),
       .groups = "drop"
     )
-  return(pval_df)
 }
+
 
 #' Transforms conformeR p-values to empirical FDR for each gene \times cell
 #'
@@ -80,23 +77,20 @@ interval_to_pval <- function(intervals_df){
 #' @return The input tibble with added columns `Rg`, the number of discoveries and `fdr`, the fdr.
 #' @export
 
-fdr <- function(int,group,gene,cutoff){
-  # Transform intervals to p-values
-  pval <- int |> interval_to_pval()
-
-  # Transform p-values to q-values
+fdr <- function(int, group, gene, cutoff) {
+  pval <- interval_to_pval(int)$pvalue
   lfdr <- tryCatch({
-    qvalue::qvalue(pval, pfdr = TRUE, lambda = seq(min(pval), max(pval), 0.05))$lfdr
+    qvalue(pval, pfdr = TRUE, lambda = seq(min(pval), max(pval), 0.05))$lfdr
   }, error = function(e) {
     tryCatch({
       pi0_manual <- 1 / (1 + length(pval))
-      qvalue::qvalue(pval, pi0 = pi0_manual)$lfdr
-    }, error = function(e2) NULL)
+      qvalue(pval, pi0 = pi0_manual)$lfdr
+    }, error = function(e2) NULL
+    )
   })
   fdr_val <- ifelse(sum(pval < cutoff) == 0, 0, mean(lfdr[pval < cutoff]))
   Rg <- sum(pval <= cutoff)
-  int <- int |> mutate(Rg=Rg,fdr=fdr_val)
-  return(int)
+  mutate(int, Rg = Rg, fdr = fdr_val)
 }
 
 #' Compute combined FDR across conformal groups
@@ -112,20 +106,18 @@ fdr <- function(int,group,gene,cutoff){
 #' @return A tibble with combined FDR per gene \times `cell_type` \times `conf_group`.
 #' @export
 
-comb_fdr <- function(tab_res){
-  fdr_tab <- tab_res |>
+comb_fdr <- function(tab_res) {
+  tab_res |>
     group_by(gene, conf_group) |>
     slice_head(n = 1) |>
     select(Rg, fdr, gene, conf_group) |>
-    mutate(
-      celltype = sub(".*x\\s*", "", conf_group)
-    ) |>
+    mutate(celltype = sub(".*x\\s*", "", conf_group)) |>
     group_by(gene, celltype) |>
     mutate(
       comb_fdr = if_else(
         sum(Rg) == 0,
         mean(Rg * fdr),
         sum(Rg * fdr) / sum(Rg)
-      ))
-  fdr_tab
+      )
+    )
 }

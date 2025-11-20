@@ -15,7 +15,6 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports:
-    glmGamPoi,
     dplyr,
     tibble,
     SummarizedExperiment,
@@ -23,12 +22,13 @@ Imports:
     quantregForest,
     scuttle,
     probably,
-    cfcausal,
     parsnip,
     workflows,
     ranger,
     qvalue,
     data.table,
+    rsample,
+    rlang,
     stats,
     utils
 Depends: SingleCellExperiment

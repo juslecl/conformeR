@@ -7,6 +7,7 @@
 #' @importFrom BiocParallel MulticoreParam bplapply
 #' @importFrom dplyr mutate select pull
 #' @importFrom stats predict
+#' @importFrom data.table rbindlist
 #' @param sce A \linkS4class{SingleCellExperiment} object containing
 #'   gene expression data ("logcounts" assay).
 #' @param obs_condition Character scalar. The name of the column in
@@ -81,7 +82,7 @@ conformeR <- function(sce,
     idx1 <- which(gsets$Te[[obs_condition]] == 1)
 
     # Loop over genes in parallel
-    gene_pvalues <- bplapply(gene_names, function(gene) {
+    gene_pvalues <- BiocParallel::bplapply(gene_names, function(gene) {
 
       # Train quantile regressions
       qrT0 <- train_qr(gsets$T0, gene, gene_names)
@@ -114,19 +115,17 @@ conformeR <- function(sce,
 
       int <- rbind(int0,int1) |>
         mutate(gene=gene) |>
-        mutate(covered = sign(lower)!=sign(upper)) # gene x conf_group
+        mutate(covered = sign(lower)!=sign(upper)) |>
+        mutate(conf_group = g)
 
       tab_res <- fdr(int,g,gene,cutoff)
       tab_res
-    }, BPPARAM = param) # closes gene loop
-    # Combine all genes for the group
-    data.table::rbindlist(gene_pvalues)[, conf_group := g]
-  }) # closes group loop
-  # Combine all groups
-  tab_res <- data.table::rbindlist(results)
-  # Here compute combined FDR
-  fdr_tab <- comb_fdr(tab_res)
-  tab_res <- tab_res |> select(-c(covered,Rg,fdr))
+    }, BPPARAM = param)
+    rbindlist(gene_pvalues)
+  })
+  tab_res <- rbindlist(results)
+  fdr_tab <- comb_fdr(tab_res) |> select(-c(Rg,fdr))
+  tab_res <- tab_res |> select(-c(covered,Rg))
 
   return(list(INT=tab_res,FDR=fdr_tab))
 }
