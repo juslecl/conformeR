@@ -7,7 +7,7 @@
 comb_fdr(tab_res)
 }
 \arguments{
-\item{tab_res}{A tibble containing columns \code{gene}, \code{conf_group}, \code{Rg}, and \code{fdr}.}
+\item{tab_res}{A tibble containing columns \code{gene}, \code{conf_group}, \code{Fg}, and \code{fdr}.}
 }
 \value{
 A tibble with combined FDR per gene \times \code{cell_type} \times \code{conf_group}.
@@ -15,5 +15,5 @@ A tibble with combined FDR per gene \times \code{cell_type} \times \code{conf_gr
 \description{
 Aggregates FDR values across cell types for each gene.
 The combined FDR is computed as a weighted average of FDR values, with weights
-given by the number of rejections \code{Rg}.
+given by the number of rejections \code{Fg}.
 }

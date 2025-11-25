@@ -16,6 +16,6 @@ A tibble in wide format, with cells as rows and genes, \code{colData} as columns
 }
 \description{
 This helper converts a SingleCellExperiment object into a wide-format tibble.
-Meta-data columns (\code{conf_group} and the observed condition) are merged together with
+Meta-data columns (\code{conf_group} and the observed condition) are meFged together with
 the gene expression matrix (counts).
 }

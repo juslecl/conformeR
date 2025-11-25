@@ -118,7 +118,7 @@ conformeR <- function(sce,
         mutate(covered = sign(lower)!=sign(upper)) |>
         mutate(conf_group = g)
 
-      tab_res <- fdr(int,g,gene,cutoff)
+      tab_res <- fdr(int,cutoff)
       tab_res
     }, BPPARAM = param)
     rbindlist(gene_pvalues)

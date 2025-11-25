@@ -16,7 +16,7 @@ subset_by_condition <- function(tibble, condition, value) {
 #' Convert a SingleCellExperiment to a wide tibble
 #'
 #' This helper converts a SingleCellExperiment object into a wide-format tibble.
-#' Meta-data columns (`conf_group` and the observed condition) are merged together with
+#' Meta-data columns (`conf_group` and the observed condition) are meFged together with
 #' the gene expression matrix (counts).
 #'
 #' @importFrom tibble as_tibble
@@ -74,10 +74,10 @@ interval_to_pval <- function(intervals_df) {
 #' @param gene Name of the gene (unused, output grouped by gene anyway).
 #' @param cutoff Numeric threshold defining significance.
 #'
-#' @return The input tibble with added columns `Rg`, the number of discoveries and `fdr`, the fdr.
+#' @return The input tibble with added columns `Fg`, the number of discoveries and `fdr`, the fdr.
 #' @export
 
-fdr <- function(int, group, gene, cutoff) {
+fdr <- function(int, cutoff) {
   pval <- interval_to_pval(int)$pvalue
   lfdr <- tryCatch({
     qvalue(pval, pfdr = TRUE, lambda = seq(min(pval), max(pval), 0.05))$lfdr
@@ -88,20 +88,20 @@ fdr <- function(int, group, gene, cutoff) {
     }, error = function(e2) NULL
     )
   })
-  fdr_val <- ifelse(sum(pval < cutoff) == 0, 0, mean(lfdr[pval < cutoff]))
-  Rg <- sum(pval <= cutoff)
-  mutate(int, Rg = Rg, fdr = fdr_val)
+  fdr_val <- ifelse(sum(pval < cutoff) == 0, 1, mean(lfdr[pval < cutoff]))
+  Fg <- (1/length(pval))*sum(pval <= cutoff)
+  mutate(int, Fg = Fg, fdr = fdr_val, Rg = sum(pval <= cutoff))
 }
 
 #' Compute combined FDR across conformal groups
 #'
 #' Aggregates FDR values across cell types for each gene.
 #' The combined FDR is computed as a weighted average of FDR values, with weights
-#' given by the number of rejections `Rg`.
+#' given by the number of rejections `Fg`.
 #'
 #' @importFrom dplyr group_by slice_head select mutate if_else
 #'
-#' @param tab_res A tibble containing columns `gene`, `conf_group`, `Rg`, and `fdr`.
+#' @param tab_res A tibble containing columns `gene`, `conf_group`, `Fg`, and `fdr`.
 #'
 #' @return A tibble with combined FDR per gene \times `cell_type` \times `conf_group`.
 #' @export
@@ -110,14 +110,14 @@ comb_fdr <- function(tab_res) {
   tab_res |>
     group_by(gene, conf_group) |>
     slice_head(n = 1) |>
-    select(Rg, fdr, gene, conf_group) |>
+    select(Fg, fdr, gene, conf_group, Rg) |>
     mutate(celltype = sub(".*x\\s*", "", conf_group)) |>
     group_by(gene, celltype) |>
     mutate(
       comb_fdr = if_else(
-        sum(Rg) == 0,
-        mean(Rg * fdr),
-        sum(Rg * fdr) / sum(Rg)
+        sum(Fg) == 0,
+        1,
+        sum(Fg * fdr) / sum(Rg)
       )
     )
 }

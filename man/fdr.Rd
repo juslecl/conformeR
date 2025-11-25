@@ -4,19 +4,19 @@
 \alias{fdr}
 \title{Transforms conformeR p-values to empirical FDR for each gene \times cell}
 \usage{
-fdr(int, group, gene, cutoff)
+fdr(int, cutoff)
 }
 \arguments{
 \item{int}{A tibble of conformal intervals.}
 
+\item{cutoff}{Numeric threshold defining significance.}
+
 \item{group}{A grouping variable (unused but kept for compatibility).}
 
 \item{gene}{Name of the gene (unused, output grouped by gene anyway).}
-
-\item{cutoff}{Numeric threshold defining significance.}
 }
 \value{
-The input tibble with added columns \code{Rg}, the number of discoveries and \code{fdr}, the fdr.
+The input tibble with added columns \code{Fg}, the number of discoveries and \code{fdr}, the fdr.
 }
 \description{
 Converts conformal intervals to p-values, then uses the \code{qvalue} package to
