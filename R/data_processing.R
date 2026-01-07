@@ -4,6 +4,7 @@
 #' @importFrom SummarizedExperiment colData
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
+#' @importFrom DESeq2 varianceStabilizingTransformation
 #' @importFrom rsample initial_split training testing
 #'
 #' @param sce SingleCellExperiment with replicate_id, obs_condition, cell_type in colData
@@ -22,6 +23,10 @@ data_processing <- function(sce, replicate_id, obs_condition, cell_type,
   stopifnot(is(sce, "SingleCellExperiment"))
   set.seed(1234)
 
+  if (!("matrix" %in% class(assay(sce,"logcounts")))){
+    assay(sce,"logcounts") <- assay(sce,"logcounts") |> as.matrix()
+  }
+
   colData(sce)[[replicate_id]] <- as.factor(colData(sce)[[replicate_id]])
   colData(sce)[[obs_condition]] <- as.factor(colData(sce)[[obs_condition]])
   colData(sce)[[cell_type]] <- as.factor(colData(sce)[[cell_type]])
@@ -33,19 +38,25 @@ data_processing <- function(sce, replicate_id, obs_condition, cell_type,
   colData(sce)$conf_group <- colData_df$conf_group
   colData_df$row <- seq_len(nrow(colData_df))
 
+#################################################################################
+  #mat_out <- matrix(NA,
+   #                 nrow = nrow(sce),
+    #                ncol = ncol(sce),
+    #                dimnames = list(rownames(sce), colnames(sce)))
+
+  #for (g in levels(sce$conf_group)) {
+  #  idx <- which(sce$conf_group == g)
+   # sce_g <- sce[, idx]
+    #vst_g <- varianceStabilizingTransformation(assay(sce_g,"counts"), blind = FALSE)
+  #  mat_out[, idx] <- vst_g
+  #}
+  #assay(sce, "vst_assay") <- mat_out
+#################################################################################
+
   split1 <- initial_split(colData_df, prop = size_train, strata = conf_group)
   remaining <- training(split1)
   test_idx <- testing(split1)$row
 
-  if (size_cal == 0) {
-    train_idx <- training(split1)$row
-    train_set <- sce[, train_idx]
-    test_set <- sce[, test_idx]
-    return(list(
-      train_set = sce_to_wide_tibble(train_set, obs_condition),
-      test_set = sce_to_wide_tibble(test_set, obs_condition)
-    ))
-  } else {
     split2 <- initial_split(remaining, prop = 1 - size_cal, strata = conf_group)
     proper_idx <- training(split2)$row
     cal_idx <- testing(split2)$row
@@ -59,7 +70,6 @@ data_processing <- function(sce, replicate_id, obs_condition, cell_type,
       cal_set = sce_to_wide_tibble(cal_set, obs_condition),
       test_set = sce_to_wide_tibble(test_set, obs_condition)
     ))
-  }
 }
 
 

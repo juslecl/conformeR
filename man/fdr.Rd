@@ -20,6 +20,6 @@ The input tibble with added columns \code{Fg}, the number of discoveries and \co
 }
 \description{
 Converts conformal intervals to p-values, then uses the \code{qvalue} package to
-estimate local false discovery rates (lfdr).
+estimate the q-value (qval).
 A fallback approach is used when qvalue estimation fails.
 }

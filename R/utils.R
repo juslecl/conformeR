@@ -32,7 +32,7 @@ subset_by_condition <- function(tibble, condition, value) {
 sce_to_wide_tibble <- function(sce, obs_condition) {
   meta_df <- as_tibble(colData(sce)) |>
     select(conf_group, all_of(obs_condition))
-  expr_df <- as_tibble(t(assay(sce, "counts")))
+  expr_df <- as_tibble(t(assay(sce, "logcounts")))
   colnames(expr_df) <- rownames(sce)
   bind_cols(meta_df, expr_df)
 }
@@ -63,7 +63,7 @@ interval_to_pval <- function(intervals_df) {
 #' Transforms conformeR p-values to empirical FDR for each gene \times cell
 #'
 #' Converts conformal intervals to p-values, then uses the `qvalue` package to
-#' estimate local false discovery rates (lfdr).
+#' estimate the q-value (qval).
 #' A fallback approach is used when qvalue estimation fails.
 #'
 #' @importFrom dplyr mutate
@@ -79,18 +79,27 @@ interval_to_pval <- function(intervals_df) {
 
 fdr <- function(int, cutoff) {
   pval <- interval_to_pval(int)$pvalue
-  lfdr <- tryCatch({
-    qvalue(pval, pfdr = TRUE, lambda = seq(min(pval), max(pval), 0.05))$lfdr
+  qval <- tryCatch({
+    qvalue(pval, pfdr = TRUE, lambda = seq(min(pval), max(pval), 0.05))$qvalues
   }, error = function(e) {
     tryCatch({
       pi0_manual <- 1 / (1 + length(pval))
-      qvalue(pval, pi0 = pi0_manual)$lfdr
+      qvalue(pval, pi0 = pi0_manual)$qval
     }, error = function(e2) NULL
     )
   })
-  fdr_val <- ifelse(sum(pval < cutoff) == 0, 1, mean(lfdr[pval < cutoff]))
-  Fg <- (1/length(pval))*sum(pval <= cutoff)
-  mutate(int, Fg = Fg, fdr = fdr_val, Rg = sum(pval <= cutoff))
+  fdr_val <- ifelse(sum(pval <= cutoff) == 0, 1, mean(qval[pval < cutoff]))
+  Rg <- sum(pval <= cutoff)
+  res <- data.frame(Rg = Rg, fdr = fdr_val)
+  res <- res %>%
+    mutate(
+      fdr = case_when(
+        is.na(fdr) & Rg < 0.2 * length(pval) ~ 1,
+        is.na(fdr) & Rg > 0.2 * length(pval) ~ 1 / length(pval),
+        TRUE ~ fdr
+      )
+    )
+  return(res)
 }
 
 #' Compute combined FDR across conformal groups
@@ -108,16 +117,7 @@ fdr <- function(int, cutoff) {
 
 comb_fdr <- function(tab_res) {
   tab_res |>
-    group_by(gene, conf_group) |>
-    slice_head(n = 1) |>
-    select(Fg, fdr, gene, conf_group, Rg) |>
     mutate(celltype = sub(".*x\\s*", "", conf_group)) |>
-    group_by(gene, celltype) |>
-    mutate(
-      comb_fdr = if_else(
-        sum(Fg) == 0,
-        1,
-        sum(Fg * fdr) / sum(Rg)
-      )
-    )
+    group_by(gene, celltype) |> summarize(comb_fdr=ifelse(sum(Rg)==0, 1, sum(fdr*Rg)/sum(Rg)))
 }
+

@@ -118,14 +118,14 @@ conformeR <- function(sce,
         mutate(covered = sign(lower)!=sign(upper)) |>
         mutate(conf_group = g)
 
-      tab_res <- fdr(int,cutoff)
-      tab_res
+      fdr_res <- fdr(int,cutoff)
+      cbind.data.frame(fdr_res, conf_group=g, gene=gene)
     }, BPPARAM = param)
     rbindlist(gene_pvalues)
   })
   tab_res <- rbindlist(results)
-  fdr_tab <- comb_fdr(tab_res) |> select(-c(Rg,fdr))
-  tab_res <- tab_res |> select(-c(covered,Rg))
+  fdr_tab <- comb_fdr(tab_res) #|> select(-c(Fg,Rg,fdr))
+  #tab_res <- tab_res |> select(-c(covered,Rg))
 
   return(list(INT=tab_res,FDR=fdr_tab))
 }

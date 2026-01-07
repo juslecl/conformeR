@@ -30,5 +30,6 @@ Imports:
     rsample,
     rlang,
     stats,
+    DESeq2,
     utils
 Depends: SingleCellExperiment

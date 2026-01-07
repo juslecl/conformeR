@@ -1,0 +1,19 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/build_intervals.html</loc></url>
+<url><loc>/reference/comb_fdr.html</loc></url>
+<url><loc>/reference/compute_cqr_scores.html</loc></url>
+<url><loc>/reference/conformeR.html</loc></url>
+<url><loc>/reference/data_processing.html</loc></url>
+<url><loc>/reference/eta_conformeR.html</loc></url>
+<url><loc>/reference/fdr.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/interval_to_pval.html</loc></url>
+<url><loc>/reference/prop_score.html</loc></url>
+<url><loc>/reference/sce_to_wide_tibble.html</loc></url>
+<url><loc>/reference/subset_by_condition.html</loc></url>
+<url><loc>/reference/train_qr.html</loc></url>
+</urlset>
+
