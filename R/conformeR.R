@@ -46,6 +46,7 @@
 conformeR <- function(sce,
                        obs_condition,
                        replicate_id,
+                       prop_score,
                        cell_type,
                        spacing = 0.01,
                        size_train = 0.5,
@@ -89,7 +90,13 @@ conformeR <- function(sce,
       qrT1 <- train_qr(gsets$T1, gene, gene_names)
 
       # Propensity score
-      ps_model <- prop_score(rbind(gsets$T0, gsets$T1), gene, gene_names, obs_condition)
+      if (prop_score == "linear") {
+        ps_model <- prop_score_ridge(rbind(gsets$T0, gsets$T1), gene, gene_names, obs_condition)
+      } else if (prop_score == "tree_based") {
+        ps_model <- prop_score_rf(rbind(gsets$T0, gsets$T1), gene, gene_names, obs_condition)
+      } else {
+        stop("prop_score value not recognized. use 'linear' or 'tree_based'")
+      }
       ps_cal   <- predict(ps_model, rbind(gsets$C0, gsets$C1), type = "prob") |> pull(.pred_1)
       ps_test <- predict(ps_model, test, type = "prob") |> pull(.pred_1)
       ps_test <- ifelse(ps_test==1,min(max(ps_test),1),ps_test)
