@@ -14,7 +14,8 @@
 #'
 #' @return A fitted workflow object containing the trained propensity score model.
 #' @export
-prop_score <- function(proper_set, gene, gene_names, obs_condition) {
+
+prop_score_rf <- function(proper_set, gene, gene_names, obs_condition) {
   model_prop_score <- rand_forest() |>
     set_engine("ranger") |>
     set_mode("classification")
@@ -31,6 +32,43 @@ prop_score <- function(proper_set, gene, gene_names, obs_condition) {
 
   return(prop_scores)
 }
+
+
+prop_score_ridge <- function(proper_set, gene, gene_names, obs_condition) {
+  
+  model_prop_score <- linear_reg(penalty = tune(), mixture = 0) |>
+    set_engine("glmnet") |>
+    set_mode("classification")
+
+  response <- paste0("as.factor(", obs_condition, ")")
+  predictors <- paste(gene_names[gene_names != gene], collapse = " + ")
+  f <- as.formula(paste(response, "~", predictors))
+
+  wf <- workflow() |>
+    add_formula(f) |>
+    add_model(model_prop_score)
+
+#5-folds validation
+  set.seed(123)
+  folds <- vfold_cv(proper_set, v = 5, strata = all_of(obs_condition))
+
+  grid <- grid_regular(penalty(), levels = 30)
+
+  res <- tune_grid(
+    wf,
+    resamples = folds,
+    grid = grid,
+    metrics = metric_set(roc_auc, accuracy)
+  )
+
+  best_penalty <- select_best(res, metric = "roc_auc")
+
+  final_wf <- finalize_workflow(wf, best_penalty)
+  prop_scores <- fit(final_wf, proper_set)
+
+  return(prop_scores)
+}
+
 
 #' Train a quantile regression model
 #'
