@@ -62,7 +62,7 @@ conformeR <- function(sce,
   calT1    <- subset_by_condition(splits$cal_set, obs_condition, 1)
   test     <- splits$test_set
 
-  groups     <- levels(splits$train_set$conf_group)
+  groups     <- levels(splits$train_set[[cell_type]])
   alphas     <- seq(spacing, 1 - spacing, spacing)
   gene_names <- rownames(sce)
 
@@ -70,11 +70,11 @@ conformeR <- function(sce,
   results <- lapply(groups, function(g) {
     # Subset by group
     gsets <- list(
-      T0 = properT0[properT0$conf_group == g, ],
-      T1 = properT1[properT1$conf_group == g, ],
-      C0 = calT0[calT0$conf_group == g, ],
-      C1 = calT1[calT1$conf_group == g, ],
-      Te = test[test$conf_group == g,]
+      T0 = properT0[properT0[[cell_type]] == g, ],
+      T1 = properT1[properT1[[cell_type]] == g, ],
+      C0 = calT0[calT0[[cell_type]] == g, ],
+      C1 = calT1[calT1[[cell_type]] == g, ],
+      Te = test[test[[cell_type]] == g,]
     )
     stopifnot(ncol(gsets$T0) > 2, ncol(gsets$T1) > 2)
 

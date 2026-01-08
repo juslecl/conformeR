@@ -29,9 +29,9 @@ subset_by_condition <- function(tibble, condition, value) {
 #' @return A tibble in wide format, with cells as rows and genes, `colData` as columns.
 #' @export
 
-sce_to_wide_tibble <- function(sce, obs_condition) {
+sce_to_wide_tibble <- function(sce, obs_condition,cell_type) {
   meta_df <- as_tibble(colData(sce)) |>
-    select(conf_group, all_of(obs_condition))
+    dplyr::select(cell_type, all_of(obs_condition))
   expr_df <- as_tibble(t(assay(sce, "counts")))
   colnames(expr_df) <- rownames(sce)
   bind_cols(meta_df, expr_df)
@@ -121,3 +121,4 @@ comb_fdr <- function(tab_res) {
       )
     )
 }
+

@@ -90,7 +90,7 @@ build_intervals <- function(test_data, idx, qr_model, scores, weights_cal,
   lower <- (1-tr_flag)*(y_obs - q_hi - eta_mat) + tr_flag*(q_lo - eta_mat - y_obs)
   upper <- (1-tr_flag)*(y_obs - q_lo + eta_mat) + tr_flag*(q_hi + eta_mat - y_obs)
 
-  as_tibble(
+  int <- as_tibble(
     cbind(
       lower = c(lower),
       upper = c(upper),
@@ -98,4 +98,9 @@ build_intervals <- function(test_data, idx, qr_model, scores, weights_cal,
       alpha = rep(alphas, each = nrow(test_data))
     )
   )
+
+  int_avg <- int |> group_by(alpha) |> summarize(lower_avg=mean(lower),
+                                                 upper_avg=mean(upper),
+                                                 alpha=alpha)
+  return(int_avg)
 }
