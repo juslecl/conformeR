@@ -92,10 +92,8 @@ conformeR <- function(sce,
       ps_model <- prop_score(rbind(gsets$T0, gsets$T1), gene, gene_names, obs_condition)
       ps_cal   <- predict(ps_model, rbind(gsets$C0, gsets$C1), type = "prob") |> pull(.pred_1)
       ps_test <- predict(ps_model, test, type = "prob") |> pull(.pred_1)
-      ps_test <- ifelse(ps_test==1,min(max(ps_test),1),ps_test)
-      ps_test <- ifelse(ps_test==0,1/nrow(test),ps_test)
-      w_cal    <- (1 - ps_cal) / ps_cal
-      w_test <- (1 - ps_test) / ps_test
+      w_cal    <- ifelse(rbind(gsets$C0, gsets$C1)$group_id==0, ps_cal/(1 - ps_cal), (1 - ps_cal) / ps_cal)
+      w_test <- ifelse(test$group_id==0, ps_test/(1 - ps_test), (1 - ps_test) / ps_test)
       wC0      <- w_cal[1:nrow(gsets$C0)]
       wC1      <- w_cal[(nrow(gsets$C0) + 1):length(w_cal)]
 
