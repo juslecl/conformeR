@@ -2,65 +2,78 @@
 % Please edit documentation in R/conformeR.R
 \name{conformeR}
 \alias{conformeR}
-\title{Conformal inference with counterfactual methods for multi-condition single-cell data DE detection}
+\title{LEMUR analysis for neighborhoods on predicted gene differential expression with conformal methods}
 \usage{
 conformeR(
   sce,
-  obs_condition,
-  replicate_id,
-  cell_type,
-  spacing = 0.01,
-  size_train = 0.5,
-  size_cal = 0.25,
-  cores = 32,
-  cutoff = 0.05
+  design_lemur = ~1,
+  constrast_lemur,
+  n_embedding = 60,
+  use_assay = "logcounts",
+  test_fraction_lemur = 0.2,
+  cp_train_frac = 0.5,
+  cp_cal_frac = 0.25,
+  cp_alpha = 0.05,
+  genes_of_interest,
+  eps_corruption,
+  what = c("conf_selection", "conf_clustering"),
+  n_cores = 1,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{sce}{A \linkS4class{SingleCellExperiment} object containing
-gene expression data ("logcounts" assay).}
+\item{sce}{A \code{SingleCellExperiment} object containing the single-cell
+expression data.}
 
-\item{obs_condition}{Character scalar. The name of the column in
-\code{colData(sce)} indicating the observed condition (e.g., treatment vs control).}
+\item{design_lemur}{A formula specifying the design used by LEMUR.}
 
-\item{replicate_id}{Character scalar. The name of the column in
-\code{colData(sce)} identifying biological replicates (e.g. patient ID).}
+\item{constrast_lemur}{A contrast specifying the comparison used for
+differential-expression testing in LEMUR: a call to \code{cond()} specifying a full observation
+(e.g. \code{cond(treatment = "A", sex = "male") - cond(treatment = "C", sex = "male")} to
+compare treatment A vs C for male observations).}
 
-\item{cell_type}{Character scalar. The name of the column in
-\code{colData(sce)} specifying cell types.}
+\item{n_embedding}{Number of dimensions in the LEMUR embedding.}
 
-\item{spacing}{Numeric scalar. Grid spacing for prediction intervals computation.
-Default is \code{0.01}.}
+\item{use_assay}{Character string specifying the assay to use.}
 
-\item{size_train}{Numeric scalar between 0 and 1. Proportion of data used
-for training. Default is \code{0.5}.}
+\item{test_fraction_lemur}{Fraction of cells used as the LEMUR test set.}
 
-\item{size_cal}{Numeric scalar between 0 and 1. Proportion of data used
-for calibration. Default is \code{0.25}.}
+\item{cp_train_frac}{Fraction of cells used for conformal training.}
 
-\item{cores}{Integer. Number of parallel workers for computation.
-Default is \code{32}.}
+\item{cp_cal_frac}{Fraction of cells used for conformal calibration.}
+
+\item{cp_alpha}{Miscoverage level for the conformal procedures.}
+
+\item{genes_of_interest}{Character vector containing the names of genes
+to include in the conformal analysis.They need to correspond to the row names of the sce.}
+
+\item{eps_corruption}{Label corruption level estimate used in the conformal
+procedures (vector of length length(genes_of_interest)).}
+
+\item{what}{Character vector specifying the conformal procedure(s) to run.}
+
+\item{n_cores}{Number of cores used for parallel processing.}
+
+\item{verbose}{Logical indicating whether to display progress information.}
 }
 \value{
-A list with the following components:
+A list containing:
 \describe{
-\item{INT}{A tibble of conformal prediction intervals
-for each gene x cell x level of confidence.}
-\item{FDR}{A tibble summarizing combined FDR per gene and cell_type.}
+\item{\code{fit_lemur}}{The LEMUR test-set object restricted to the
+genes of interest.}
+\item{\code{nei_lemur}}{The LEMUR neighborhoods for the genes of
+interest in the test set.}
+\item{\code{conf_results}}{The results of the conformal procedures
+for the genes of interest.}
 }
 }
 \description{
-This function computes conformal prediction intervals and FDR-adjusted
-results for gene expression data stored in a
-\linkS4class{SingleCellExperiment} object. Results are aggregated at \code{cell_type} level.
+Runs a LEMUR analysis, identifies differential-expression neighborhoods,
+and applies conformal procedures to a set of genes of interest.
+The data are split into training, calibration, and test sets based on the
+covariates specified in the LEMUR design formula.
 }
-\examples{
-\dontrun{
-library(SingleCellExperiment)
-sce <- mock_sce_object()  # example input
-res <- conformeR(sce, obs_condition="treatment",
-                 replicate_id="patient_id", cell_type="celltype",
-                 cores=4)
-}
-
+\details{
+The conformal procedures are applied to a subset of genes of
+interest. Genes are processed in chunks to allow parallel computation.
 }

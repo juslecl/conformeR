@@ -2,28 +2,14 @@
 % Please edit documentation in R/data_processing.R
 \name{data_processing}
 \alias{data_processing}
-\title{\enumerate{
-\item creation of conformal groups \code{conf_group}.
-\item splitting of the original dataset using \code{initial_split} and balancing on \code{conf_group}.
-}}
+\title{Splitting of the original dataset using \code{initial_split} and balancing on covariates passed to \code{lemur}.}
 \usage{
-data_processing(
-  sce,
-  replicate_id,
-  obs_condition,
-  cell_type,
-  size_train = 0.5,
-  size_cal = 0.25
-)
+data_processing(sce, strat_by, size_train = 0.3, size_cal = 0.25)
 }
 \arguments{
 \item{sce}{SingleCellExperiment with replicate_id, obs_condition, cell_type in colData}
 
-\item{replicate_id}{column name for biological replicate (string)}
-
-\item{obs_condition}{column name for observed condition (string)}
-
-\item{cell_type}{column name for cell types (string)}
+\item{strat_by}{vector of column names in colData(sce) on which we stratify.}
 
 \item{size_train}{proportion for training set}
 
@@ -33,8 +19,5 @@ data_processing(
 list with original sce, proper training, calibration, and test sets
 }
 \description{
-\enumerate{
-\item creation of conformal groups \code{conf_group}.
-\item splitting of the original dataset using \code{initial_split} and balancing on \code{conf_group}.
-}
+Splitting of the original dataset using \code{initial_split} and balancing on covariates passed to \code{lemur}.
 }

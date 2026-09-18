@@ -16,20 +16,18 @@ Suggests:
 Config/testthat/edition: 3
 Imports:
     dplyr,
+    ggplot2,
     tibble,
     SummarizedExperiment,
     BiocParallel,
-    quantregForest,
     scuttle,
     probably,
     parsnip,
     workflows,
     ranger,
-    qvalue,
     data.table,
     rsample,
     rlang,
     stats,
-    DESeq2,
     utils
 Depends: SingleCellExperiment
