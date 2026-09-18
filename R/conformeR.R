@@ -1,129 +1,140 @@
-#' Conformal inference with counterfactual methods for multi-condition single-cell data DE detection
+#' LEMUR analysis for neighborhoods on predicted gene differential expression with conformal methods
 #'
-#' This function computes conformal prediction intervals and FDR-adjusted
-#' results for gene expression data stored in a
-#' \linkS4class{SingleCellExperiment} object. Results are aggregated at `cell_type` level.
+#' Runs a LEMUR analysis, identifies differential-expression neighborhoods,
+#' and applies conformal procedures to a set of genes of interest.
+#' The data are split into training, calibration, and test sets based on the
+#' covariates specified in the LEMUR design formula.
 #'
-#' @importFrom BiocParallel MulticoreParam bplapply
-#' @importFrom dplyr mutate select pull
-#' @importFrom stats predict
-#' @importFrom data.table rbindlist
-#' @param sce A \linkS4class{SingleCellExperiment} object containing
-#'   gene expression data ("logcounts" assay).
-#' @param obs_condition Character scalar. The name of the column in
-#'   `colData(sce)` indicating the observed condition (e.g., treatment vs control).
-#' @param replicate_id Character scalar. The name of the column in
-#'   `colData(sce)` identifying biological replicates (e.g. patient ID).
-#' @param cell_type Character scalar. The name of the column in
-#'   `colData(sce)` specifying cell types.
-#' @param spacing Numeric scalar. Grid spacing for prediction intervals computation.
-#'   Default is `0.01`.
-#' @param size_train Numeric scalar between 0 and 1. Proportion of data used
-#'   for training. Default is `0.5`.
-#' @param size_cal Numeric scalar between 0 and 1. Proportion of data used
-#'   for calibration. Default is `0.25`.
-#' @param cores Integer. Number of parallel workers for computation.
-#'   Default is `32`.
+#' The conformal procedures are applied to a subset of genes of
+#' interest. Genes are processed in chunks to allow parallel computation.
 #'
-#' @return A list with the following components:
+#' @param sce A \code{SingleCellExperiment} object containing the single-cell
+#' expression data.
+#' @param design_lemur A formula specifying the design used by LEMUR.
+#' @param constrast_lemur A contrast specifying the comparison used for
+#' differential-expression testing in LEMUR: a call to `cond()` specifying a full observation
+#' (e.g. `cond(treatment = "A", sex = "male") - cond(treatment = "C", sex = "male")` to
+#' compare treatment A vs C for male observations).
+#' @param n_embedding Number of dimensions in the LEMUR embedding.
+#' @param use_assay Character string specifying the assay to use.
+#' @param test_fraction_lemur Fraction of cells used as the LEMUR test set.
+#' @param cp_train_frac Fraction of cells used for conformal training.
+#' @param cp_cal_frac Fraction of cells used for conformal calibration.
+#' @param cp_alpha Miscoverage level for the conformal procedures.
+#' @param genes_of_interest Character vector containing the names of genes
+#' to include in the conformal analysis.They need to correspond to the row names of the sce.
+#' @param eps_corruption Label corruption level estimate used in the conformal
+#' procedures (vector of length length(genes_of_interest)).
+#' @param what Character vector specifying the conformal procedure(s) to run.
+#' @param n_cores Number of cores used for parallel processing.
+#' @param verbose Logical indicating whether to display progress information.
+#'
+#' @return A list containing:
 #' \describe{
-#'   \item{INT}{A tibble of conformal prediction intervals
-#'     for each gene x cell x level of confidence.}
-#'   \item{FDR}{A tibble summarizing combined FDR per gene and cell_type.}
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' library(SingleCellExperiment)
-#' sce <- mock_sce_object()  # example input
-#' res <- conformeR(sce, obs_condition="treatment",
-#'                  replicate_id="patient_id", cell_type="celltype",
-#'                  cores=4)
+#' \item{\code{fit_lemur}}{The LEMUR test-set object restricted to the
+#' genes of interest.}
+#' \item{\code{nei_lemur}}{The LEMUR neighborhoods for the genes of
+#' interest in the test set.}
+#' \item{\code{conf_results}}{The results of the conformal procedures
+#' for the genes of interest.}
 #' }
 #'
 #' @export
 
 conformeR <- function(sce,
-                       obs_condition,
-                       replicate_id,
-                       cell_type,
-                       spacing = 0.01,
-                       size_train = 0.5,
-                       size_cal = .25,
-                       cores = 32, cutoff = .05) {
-  set.seed(123)
-  param <- MulticoreParam(workers = cores, RNGseed = 123)
+                      design_lemur = ~ 1,
+                      constrast_lemur,
+                      n_embedding = 60,
+                      use_assay = "logcounts",
+                      test_fraction_lemur = 0.2,
+                      cp_train_frac=0.5,
+                      cp_cal_frac=0.25,
+                      cp_alpha=0.05,
+                      genes_of_interest,
+                      eps_corruption,
+                      what=c("conf_selection","conf_clustering"),
+                      n_cores=1,
+                      verbose = TRUE){
+    # 1. Run the standard lemur procedure.
+    fit <- lemur::lemur(sce, design = design_lemur, n_embedding = n_embedding, test_fraction = test_fraction_lemur,use_assay=use_assay)
+    SingleCellExperiment::reducedDim(fit, "fit_umap") <- uwot::umap(t(fit$embedding))
+    fit <- lemur::align_harmony(fit)
+    SingleCellExperiment::reducedDim(fit, "fit_al_umap") <- uwot::umap(t(fit$embedding))
+    fit <- lemur::test_de(fit, contrast = constrast_lemur)
+    covariates <- all.vars(design_lemur)
 
-  # Split data
-  splits <- data_processing(sce, replicate_id, obs_condition, cell_type, size_train, size_cal)
-  properT0 <- subset_by_condition(splits$train_set, obs_condition, 0)
-  properT1 <- subset_by_condition(splits$train_set, obs_condition, 1)
-  calT0    <- subset_by_condition(splits$cal_set, obs_condition, 0)
-  calT1    <- subset_by_condition(splits$cal_set, obs_condition, 1)
-  test     <- splits$test_set
+    # 2. Split data
+    split <- data_processing(fit,strat_by=covariates,size_train =cp_train_frac, size_cal = cp_cal_frac)
+    pred_train <- split$train
+    pred_cal <- split$cal
+    pred_test <- split$test
 
-  groups     <- levels(splits$train_set$conf_group)
-  alphas     <- seq(spacing, 1 - spacing, spacing)
-  gene_names <- rownames(sce)
-
-  # Iterate over groups
-  results <- lapply(groups, function(g) {
-    # Subset by group
-    gsets <- list(
-      T0 = properT0[properT0$conf_group == g, ],
-      T1 = properT1[properT1$conf_group == g, ],
-      C0 = calT0[calT0$conf_group == g, ],
-      C1 = calT1[calT1$conf_group == g, ],
-      Te = test[test$conf_group == g,]
+    # 3. Produce lemur labels
+    nei_train <- lemur::find_de_neighborhoods(
+      pred_train,
+      group_by = glmGamPoi::vars(covariates),
+      test_method = "edgeR"
     )
-    stopifnot(ncol(gsets$T0) > 2, ncol(gsets$T1) > 2)
 
-    idx0 <- which(gsets$Te[[obs_condition]] == 0)
-    idx1 <- which(gsets$Te[[obs_condition]] == 1)
+    nei_cal <- lemur::find_de_neighborhoods(
+      pred_cal,
+      group_by = glmGamPoi::vars(covariates),
+      test_method = "edgeR"
+    )
 
-    # Loop over genes in parallel
-    gene_pvalues <- BiocParallel::bplapply(gene_names, function(gene) {
+    nei_test <- lemur::find_de_neighborhoods(
+      pred_test,
+      group_by = glmGamPoi::vars(covariates),
+      test_method = "edgeR"
+    )
 
-      # Train quantile regressions
-      qrT0 <- train_qr(gsets$T0, gene, gene_names)
-      qrT1 <- train_qr(gsets$T1, gene, gene_names)
+  # 4. Prepare for conformal procedures
+  gene_chunks <- split(genes_of_interest, ceiling(seq_along(genes_of_interest) / 5))
+  param <- BiocParallel::MulticoreParam(workers = n_cores)
 
-      # Propensity score
-      ps_model <- prop_score(rbind(gsets$T0, gsets$T1), gene, gene_names, obs_condition)
-      ps_cal   <- predict(ps_model, rbind(gsets$C0, gsets$C1), type = "prob") |> pull(.pred_1)
-      ps_test <- predict(ps_model, test, type = "prob") |> pull(.pred_1)
-      w_cal    <- ifelse(rbind(gsets$C0, gsets$C1)$group_id==0, ps_cal/(1 - ps_cal), (1 - ps_cal) / ps_cal)
-      w_test <- ifelse(test$group_id==0, ps_test/(1 - ps_test), (1 - ps_test) / ps_test)
-      wC0      <- w_cal[1:nrow(gsets$C0)]
-      wC1      <- w_cal[(nrow(gsets$C0) + 1):length(w_cal)]
+  # 5. Run conformal procedures
+  chunk_results <- BiocParallel::bplapply(
+    seq_along(gene_chunks),
+    function(i) {
 
-      # calibration scores
-      scoresT0 <- compute_cqr_scores(qrT0, gsets$C0, gene, alphas)
-      scoresT1 <- compute_cqr_scores(qrT1, gsets$C1, gene, alphas)
+      chunk_genes <- gene_chunks[[i]]
 
-      int0 <- build_intervals(
-        gsets$Te, idx0,
-        qrT1, scoresT1, wC1, w_test,
-        alphas, gene, gene_names, 1)
+      pred_train_chunk <- pred_train[chunk_genes, ]
+      pred_cal_chunk   <- pred_cal[chunk_genes, ]
+      pred_test_chunk  <- pred_test[chunk_genes, ]
 
-      int1 <- build_intervals(
-        gsets$Te, idx1,
-        qrT0, scoresT0, wC0, w_test,
-        alphas, gene, gene_names, 0)
+      nei_train_chunk <- nei_train |> dplyr::filter(name %in% chunk_genes) |>
+        dplyr::mutate(
+          neighborhood = purrr::map(neighborhood, ~ colnames(pred_train) %in% .x)
+        )
+      nei_cal_chunk <- nei_cal |> dplyr::filter(name %in% chunk_genes) |>
+        dplyr::mutate(
+          neighborhood = purrr::map(neighborhood, ~ colnames(pred_cal) %in% .x)
+        )
 
-      int <- rbind(int0,int1) |>
-        mutate(gene=gene) |>
-        mutate(covered = sign(lower)!=sign(upper)) |>
-        mutate(conf_group = g)
+      chunk_res <- conformal_lemur(
+        pred_train_chunk,
+        pred_cal_chunk,
+        pred_test_chunk,
+        nei_train_chunk,
+        nei_cal_chunk,
+        what,
+        cp_alpha,
+        eps_corruption
+      )
 
-      fdr_res <- fdr(int,cutoff)
-      cbind.data.frame(fdr_res, conf_group=g, gene=gene)
-    }, BPPARAM = param)
-    rbindlist(gene_pvalues)
-  })
-  tab_res <- rbindlist(results)
-  fdr_tab <- comb_fdr(tab_res) #|> select(-c(Fg,Rg,fdr))
-  #tab_res <- tab_res |> select(-c(covered,Rg))
+      rm(pred_train_chunk, pred_cal_chunk, pred_test_chunk, nei_train_chunk, nei_cal_chunk)
+      gc(FALSE)
 
-  return(list(INT=tab_res,FDR=fdr_tab))
+      chunk_res
+    },
+    BPPARAM = param
+  )
+
+  # 6. Collect the results
+  pred_set_all <- dplyr::bind_rows(chunk_results)
+  return(list(fit_lemur=pred_test[genes_of_interest,], nei_lemur=nei_test |> dplyr::filter(name %in% genes_of_interest), conf_results=pred_set_all))
 }
+
+
+
