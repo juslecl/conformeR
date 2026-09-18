@@ -98,9 +98,5 @@ build_intervals <- function(test_data, idx, qr_model, scores, weights_cal,
       alpha = rep(alphas, each = nrow(test_data))
     )
   )
-
-  int_avg <- int |> group_by(alpha) |> summarize(lower_avg=mean(lower),
-                                                 upper_avg=mean(upper),
-                                                 alpha=alpha)
-  return(int_avg)
+  return(int)
 }

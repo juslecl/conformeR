@@ -113,19 +113,20 @@ conformeR <- function(sce,
         qrT0, scoresT0, wC0, w_test,
         alphas, gene, gene_names, 0)
 
-      int <- rbind(int0,int1) |>
-        mutate(gene=gene) |>
-        mutate(covered = sign(lower)!=sign(upper)) |>
-        mutate(conf_group = g)
+      int_avg <- rbind(int0,int1) |>
+        group_by(alpha) |> summarize(lower_avg=mean(lower),upper_avg=mean(upper))
 
-      tab_res <- fdr(int,cutoff)
-      tab_res
+      int_avg <- int_avg |>
+        mutate(gene=gene) |>
+        mutate(celltype = g)
+
+    int_avg
     }, BPPARAM = param)
     rbindlist(gene_pvalues)
   })
-  tab_res <- rbindlist(results)
-  fdr_tab <- comb_fdr(tab_res) |> select(-c(Rg,fdr))
-  tab_res <- tab_res |> select(-c(covered,Rg))
-
-  return(list(INT=tab_res,FDR=fdr_tab))
+  tab_res <- results |> group_by(gene, celltype) |>                       # groupe par gene et celltype
+    filter(sign(lower_avg) == sign(upper_avg)) |>     # condition
+    slice_min(alpha, n = 1) |>                        # prend le plus petit alpha
+    ungroup()
+  return(list(INT=results,PVAL=tab_res))
 }
