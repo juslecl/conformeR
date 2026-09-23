@@ -12,7 +12,7 @@ small_axis(
   fix_coord = TRUE,
   remove_axes = TRUE,
   arrow_spec = grid::arrow(ends = "both", type = "closed", angle = 20, length =
-    unit(arrow_length/7, units)),
+    ggplot2::unit(arrow_length/7, units)),
   units = "mm",
   ...
 )

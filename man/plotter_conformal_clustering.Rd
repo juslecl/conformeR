@@ -22,5 +22,8 @@ size 1, grey = set size 2) below the combined grid.
 Visualizes gene-level differential expression and conformal clustering
 results on the aligned LEMUR UMAP embedding. Cells are displayed according
 to their LEMUR neighborhood membership and the size of the conformal
-prediction set.
+prediction set. The cells inside and outside the conformal neighborhood
+prediction set are combined into a single stacked plot, annotated
+"Inside" / "Outside", with one shared "Set size" legend for the
+black/grey contours.
 }

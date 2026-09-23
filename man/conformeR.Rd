@@ -16,7 +16,6 @@ conformeR(
   cp_cal_frac = 0.25,
   cp_alpha = 0.05,
   genes_of_interest,
-  eps_corruption,
   what = c("conf_selection", "conf_clustering"),
   n_cores = 1,
   verbose = TRUE
@@ -46,9 +45,6 @@ differential-expression testing in LEMUR.}
 \item{genes_of_interest}{Character vector containing the names of genes
 to include in the conformal analysis.They need to correspond to the row names of the sce.}
 
-\item{eps_corruption}{Label corruption level estimate used in the conformal
-procedures (vector of length length(genes_of_interest)).}
-
 \item{what}{Character vector specifying the conformal procedure(s) to run.}
 
 \item{n_cores}{Number of cores used for parallel processing.}
@@ -56,6 +52,9 @@ procedures (vector of length length(genes_of_interest)).}
 \item{verbose}{Logical indicating whether to display progress information.}
 
 \item{constrast_levels}{when \code{contrast_column} has more than two levels, specify which two are tested again each other.}
+
+\item{eps_corruption}{Label corruption level estimate used in the conformal
+procedures (vector of length length(genes_of_interest)).}
 }
 \value{
 A list containing:

@@ -1,5 +1,5 @@
 ---
-title: "Introduction to conformeR"
+title: "conformeR-introduction"
 author: "Justine Leclerc"
 output: rmarkdown::html_vignette
 vignette: >
@@ -13,14 +13,22 @@ conformeR provides conformal prediction layers for the cell neighborhood constru
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  dev = "png",
+  fig.width = 15,
+  fig.height = 8,
+  out.width = "100%"
 )
 ```
 
 To install conformeR, run into your console:
 ```{r setup}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 devtools::install_github("https://github.com/juslecl/conformeR")
 library(conformeR)
+library(dplyr)
+library(ggplot2)
+library(tibble)
 ```
 
 In this vignette, we run the package on a reduced version of the single-cell data by Zhao, W., Dovas, A., Spinazzi, E., et al. (2021). Deconvolution of cell type-specific drug responses in human tumor  tissue with single-cell RNA-seq. \emph{Genome Medicine}, 13, 82. (GEO accession: GSE148842).
@@ -28,7 +36,7 @@ In this vignette, we run the package on a reduced version of the single-cell dat
 As any input given to conformeR it has already been processes and quality checks were ran. 
 
 We first have a look at the data.
-```{r}
+```{r message=FALSE, warning=FALSE}
 data("sce_vignette")
 sce_vignette
 
@@ -36,26 +44,51 @@ head(colData(sce_vignette))
 ```
 
 We select some genes of interest.
-```{r}
+```{r message=FALSE, warning=FALSE}
 pan_affect_genes <- rowData(sce_vignette) %>%
   as_tibble() %>%
   dplyr::select(gid, gene) %>%
-  filter(gene %in% c("HIST3H2A", "EPC1", "HIST3H2A", "PTPRZ1", "HBEGF", "SPATA13", "MBP"))
+  filter(gene %in% c("HIST3H2A", "PTPRZ1", "HBEGF"))
 
 pan_affect_genes
 ```
 
 
 Run the conformeR main function on the dataset. By default, target coverage for conformal prediction is of cp_alpha, data split proportions are fixed to 50% training set, of which 25% calibration set. This can be modified with arguments cp_train_frac and cp_cal_frac.
-```{r}
+```{r message=FALSE, warning=FALSE}
+set.seed(2002)
 res <- conformeR(
   sce_vignette,
   design_lemur = ~ patient_id + condition,
   contrast_column = "condition",
-  genes_of_interest = pan_affect_genes,
+  genes_of_interest = pan_affect_genes$gid,
   what = c("conf_selection", "conf_clustering"),
   n_cores = 1,
   verbose = TRUE
 )
 ```
+We look at the conformal layer results.
+```{r}
+cp_res <- res$conf_results |>
+  left_join(pan_affect_genes, by=c("gene"="gid")) |>
+  dplyr::select(-gene)|>
+  dplyr::rename(gene=`gene.y`)
+```
 
+What is the size of conformal selection for each gene? How much of the cell sample does it represent?
+```{r message=FALSE, warning=FALSE}
+cp_res |> group_by(gene) |> summarize("Size neighborhood"=sum(inside_cs),"% neighborhood"=round(sum(inside_cs)/ncol(res$fit_lemur),2)*100)
+```
+What is the size of the prediction sets for each gene?
+```{r message=FALSE, warning=FALSE}
+cp_res |> group_by(gene) |> summarize("Prediction sets = inside"=sum((inside_cc==1)),"Prediction sets = outside"=sum((outside_cc==1)),"Prediction sets size 0"=sum(inside_cc+outside_cc==0))
+```
+We plot the conformal selection on top of LEMUR neighborhoods.
+```{r message=FALSE, warning=FALSE}
+plotter_conformal_selection(res, pan_affect_genes$gid)
+```
+
+Finally, we plot conformal clustering on top of LEMUR neighborhoods.
+```{r message=FALSE, warning=FALSE}
+plotter_conformal_clustering(res, pan_affect_genes$gid)
+```

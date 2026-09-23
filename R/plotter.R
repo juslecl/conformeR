@@ -103,7 +103,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
           strip.text.y = ggplot2::element_blank(),
           axis.text = ggplot2::element_text(size = 12),
           legend.text = ggplot2::element_text(size = 12),
-          legend.key.width = ggplot2::unit(2, "cm"),
+          legend.key.width = ggplot2::unit(1, "cm"),
           legend.key.height = ggplot2::unit(3, "mm"),
           panel.spacing.x = ggplot2::unit(15, "mm"),
           panel.spacing.y = ggplot2::unit(8, "mm"),
@@ -147,7 +147,10 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
 #' Visualizes gene-level differential expression and conformal clustering
 #' results on the aligned LEMUR UMAP embedding. Cells are displayed according
 #' to their LEMUR neighborhood membership and the size of the conformal
-#' prediction set.
+#' prediction set. The cells inside and outside the conformal neighborhood
+#' prediction set are combined into a single stacked plot, annotated
+#' "Inside" / "Outside", with one shared "Set size" legend for the
+#' black/grey contours.
 #'
 #' @param conformer_output A list returned by \code{run_replication},
 #' containing the LEMUR fit, LEMUR neighborhoods, and conformal results.
@@ -219,15 +222,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
                                size = 0.5
           )) +
         ggplot2::scale_alpha_identity() +
-        scale_color_de_gradient(abs_max, mid_width = 0.2,name="") +
-
-        ggplot2::guides(
-          color = ggplot2::guide_colorbar(
-            barheight = ggplot2::unit(5, "mm"),
-            barwidth = ggplot2::unit(30, "mm"),
-            title = ""
-          )
-        ) +
+        scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
 
         ggnewscale::new_scale_color() +
 
@@ -266,7 +261,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
           strip.text = ggplot2::element_text(size = 12),
           axis.text = ggplot2::element_text(size = 12),
           legend.text = ggplot2::element_text(size = 12),
-          legend.key.width = ggplot2::unit(2, "cm"),
+          legend.key.width = ggplot2::unit(1, "cm"),
           legend.key.height  = ggplot2::unit(3, "mm"),
           panel.spacing.x = ggplot2::unit(15, "mm"),
           panel.spacing.y = ggplot2::unit(8, "mm"),
@@ -303,15 +298,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
                                size = 0.5
           )) +
         ggplot2::scale_alpha_identity() +
-        scale_color_de_gradient(abs_max, mid_width = 0.2,name="") +
-
-        ggplot2::guides(
-          color =ggplot2::guide_colorbar(
-            barheight = ggplot2::unit(5, "mm"),
-            barwidth = ggplot2::unit(30, "mm"),
-            title = ""
-          )
-        ) +
+        scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
 
         ggnewscale::new_scale_color() +
 
@@ -325,7 +312,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
         ) +
         ggplot2::scale_color_manual(
           values = c(
-            "2" = "grey",
+            "0" = "grey",
             "1" = "black"
           ),
           name = "Set size",
@@ -350,7 +337,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
           strip.text = ggplot2::element_text(size = 12),
           axis.text = ggplot2::element_text(size = 12),
           legend.text = ggplot2::element_text(size = 12),
-          legend.key.width = ggplot2::unit(2, "cm"),
+          legend.key.width = ggplot2::unit(1, "cm"),
           legend.key.height  = ggplot2::unit(3, "mm"),
           panel.spacing.x = ggplot2::unit(15, "mm"),
           panel.spacing.y = ggplot2::unit(8, "mm"),
@@ -393,7 +380,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
     ) +
       ggplot2::geom_line(linewidth = 0.5) +
       ggplot2::scale_color_manual(
-        values = c("1" = "black", "2" = "grey"),
+        values = c("1" = "black", "0" = "grey"),
         name = "Set size"
       ) +
       ggplot2::theme(

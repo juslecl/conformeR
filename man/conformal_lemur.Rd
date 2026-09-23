@@ -35,10 +35,6 @@ Can contain \code{"conf_clustering"}, \code{"conf_selection"}, or both.}
 
 \item{alpha}{Numeric value specifying the target miscoverage level.
 Also used as the significance level for the Benjamini-Hochberg procedure.}
-
-\item{epsilon}{Numeric vector specifying the label corruption level for
-each gene. Used to shift the conformal p-values in the conformal
-selection procedure.}
 }
 \value{
 A data frame containing the conformal results. If

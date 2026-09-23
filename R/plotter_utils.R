@@ -24,7 +24,7 @@
 #' @export
 #'
 small_axis <- function(label = NULL, fontsize = 7, arrow_length = 10, label_offset = 1, fix_coord = TRUE, remove_axes = TRUE,
-                       arrow_spec = grid::arrow(ends = "both", type = "closed", angle = 20, length = unit(arrow_length / 7, units)),
+                       arrow_spec = grid::arrow(ends = "both", type = "closed", angle = 20, length = ggplot2::unit(arrow_length / 7, units)),
                        units = "mm", ...){
   coord <- if(fix_coord){
     ggplot2::coord_fixed(clip = "off", ...)
