@@ -51,7 +51,6 @@ conformeR <- function(sce,
                       cp_cal_frac=0.25,
                       cp_alpha=0.05,
                       genes_of_interest,
-                      eps_corruption,
                       what=c("conf_selection","conf_clustering"),
                       n_cores=1,
                       verbose = TRUE){
@@ -120,8 +119,7 @@ conformeR <- function(sce,
         nei_train_chunk,
         nei_cal_chunk,
         what,
-        cp_alpha,
-        eps_corruption
+        cp_alpha
       )
 
       rm(pred_train_chunk, pred_cal_chunk, pred_test_chunk, nei_train_chunk, nei_cal_chunk)

@@ -22,9 +22,6 @@
 #'   Can contain \code{"conf_clustering"}, \code{"conf_selection"}, or both.
 #' @param alpha Numeric value specifying the target miscoverage level.
 #'   Also used as the significance level for the Benjamini-Hochberg procedure.
-#' @param epsilon Numeric vector specifying the label corruption level for
-#'   each gene. Used to shift the conformal p-values in the conformal
-#'   selection procedure.
 #'
 #' @return A data frame containing the conformal results. If
 #'   \code{what = "conf_clustering"}, the output contains the conformal
@@ -113,7 +110,6 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     conf_pval <- lapply(
       seq_along(scores_test),
       function(gene) {
-        corrup_shift <- epsilon[gene]/2
         current_gene <- unique(score_cal$gene)[gene]
         cal_scores <- score_cal$scores_cal[
           score_cal$gene == current_gene
@@ -122,8 +118,8 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
         p <- vapply(
           scores_test[[gene]][, 1],
           function(score)
-            min(1,((sum(cal_scores < score)+runif(1)*(1+sum(cal_scores == score))) /
-                     (ncol(pred_cal) + 1))+corrup_shift),
+           ((sum(cal_scores < score)+runif(1)*(1+sum(cal_scores == score))) /
+                     (ncol(pred_cal) + 1)),
           numeric(1)
         )
 

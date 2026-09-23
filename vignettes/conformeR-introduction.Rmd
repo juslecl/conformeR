@@ -1,0 +1,61 @@
+---
+title: "Introduction to conformeR"
+author: "Justine Leclerc"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{conformeR-introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+conformeR provides conformal prediction layers for the cell neighborhood construction step of the LEMUR framework. It implements two complementary approaches, conformal clustering and conformal selection, to quantify uncertainty in the resulting cell neighborhoods, together with tools for visualizing and interpreting the resulting uncertainty sets.
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+To install conformeR, run into your console:
+```{r setup}
+devtools::install_github("https://github.com/juslecl/conformeR")
+library(conformeR)
+```
+
+In this vignette, we run the package on a reduced version of the single-cell data by Zhao, W., Dovas, A., Spinazzi, E., et al. (2021). Deconvolution of cell type-specific drug responses in human tumor  tissue with single-cell RNA-seq. \emph{Genome Medicine}, 13, 82. (GEO accession: GSE148842).
+
+As any input given to conformeR it has already been processes and quality checks were ran. 
+
+We first have a look at the data.
+```{r}
+data("sce_vignette")
+sce_vignette
+
+head(colData(sce_vignette))
+```
+
+We select some genes of interest.
+```{r}
+pan_affect_genes <- rowData(sce_vignette) %>%
+  as_tibble() %>%
+  dplyr::select(gid, gene) %>%
+  filter(gene %in% c("HIST3H2A", "EPC1", "HIST3H2A", "PTPRZ1", "HBEGF", "SPATA13", "MBP"))
+
+pan_affect_genes
+```
+
+
+Run the conformeR main function on the dataset. By default, target coverage for conformal prediction is of cp_alpha, data split proportions are fixed to 50% training set, of which 25% calibration set. This can be modified with arguments cp_train_frac and cp_cal_frac.
+```{r}
+res <- conformeR(
+  sce_vignette,
+  design_lemur = ~ patient_id + condition,
+  contrast_column = "condition",
+  genes_of_interest = pan_affect_genes,
+  what = c("conf_selection", "conf_clustering"),
+  n_cores = 1,
+  verbose = TRUE
+)
+```
+
