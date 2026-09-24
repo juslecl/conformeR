@@ -36,7 +36,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
   softies <- lapply(
     genes,
     function(gene_name) {
-      train_classifier(pred_train,nei_train,gene_name)
+      train_classifier(pred_train, nei_train, gene_name)
     }
   )
   names(softies) <- genes
@@ -55,7 +55,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     }
   )
 
-  if ("conf_clustering" %in% what){
+  if ("conf_clustering" %in% what) {
     n_cal <- ncol(pred_cal)
 
     pred_set_list <- lapply(
@@ -64,14 +64,15 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
 
         p_cal <- pred_proba[[row]]$pred
 
-        s_cal <- -pmax(p_cal, 1 - p_cal)
+        s_cal <- 1 - pmax(p_cal, 1 - p_cal)
+
         q <- sort(s_cal)[ceiling((n_cal + 1) * (1 - alpha))]
 
         p_test <- pred_proba_test[[row]]$pred
 
         cbind.data.frame(
-          inside_cc  = (-p_test <= q),
-          outside_cc = (-(1 - p_test) <= q)
+          inside_cc = (1 - p_test <= q),
+          outside_cc = (p_test <= q)
         ) |>
           dplyr::mutate(
             cell = colnames(pred_test),
@@ -83,17 +84,19 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     pred_set <- do.call(rbind.data.frame, pred_set_list)
   }
 
-  if ("conf_selection" %in% what){
+  if ("conf_selection" %in% what) {
     pred_proba <- do.call(rbind.data.frame, pred_proba)
 
     gt_cal <- nei_cal |>
       tidyr::unnest(neighborhood) |>
-      dplyr::mutate(cell_id=rep(colnames(pred_cal),nrow(nei_cal))) |>
-      dplyr::rename("gene"="name")
+      dplyr::mutate(cell_id = rep(colnames(pred_cal), nrow(nei_cal))) |>
+      dplyr::rename("gene" = "name")
 
-    score_cal <- pred_proba |> dplyr::left_join(gt_cal, by = c("cell_id", "gene"))
+    score_cal <- pred_proba |>
+      dplyr::left_join(gt_cal, by = c("cell_id", "gene"))
 
-    score_cal <- score_cal |> dplyr::mutate(scores_cal = 1000 *neighborhood - pred)
+    score_cal <- score_cal |>
+      dplyr::mutate(scores_cal = 1000 * neighborhood - pred)
 
     scores_test <- lapply(
       seq_along(genes),
@@ -118,8 +121,13 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
         p <- vapply(
           scores_test[[gene]][, 1],
           function(score)
-           ((sum(cal_scores < score)+runif(1)*(1+sum(cal_scores == score))) /
-                     (ncol(pred_cal) + 1)),
+            (
+              (
+                sum(cal_scores < score) +
+                  runif(1) * (1 + sum(cal_scores == score))
+              ) /
+                (ncol(pred_cal) + 1)
+            ),
           numeric(1)
         )
 
@@ -131,6 +139,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     )
 
     scores_test <- do.call(rbind.data.frame, scores_test)
+
     label_set <- lapply(seq_along(conf_pval), function(gene) {
 
       df <- conf_pval[[gene]] |>
@@ -148,7 +157,17 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
       (\(lst) do.call(rbind.data.frame, lst))()
   }
 
-  if (("conf_clustering" %in% what) & ("conf_selection" %in% what)) return(dplyr::left_join(label_set,pred_set, by=c("gene","cell")))
-  else if ("conf_clustering" %in% what) return(pred_set)
-  else return(label_set)
+  if (("conf_clustering" %in% what) & ("conf_selection" %in% what)) {
+    return(
+      dplyr::left_join(
+        label_set,
+        pred_set,
+        by = c("gene", "cell")
+      )
+    )
+  } else if ("conf_clustering" %in% what) {
+    return(pred_set)
+  } else {
+    return(label_set)
+  }
 }

@@ -36,28 +36,65 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-`LEMUR` fits a low-dimensional embedding and builds *neighborhood* of cells sharing a same response for a defined contrast and gene. Because this
+`LEMUR` fits a low-dimensional embedding and assigns each cell to a
+*neighborhood* when they share a similar response to a given contrast and gene. Because this
 assignment is itself the output of a fitted model, it inherits sampling
 variability: refit the model on a slightly different draw of cells, and
-the neighborhood boundaries may shift. `conformeR` wraps this neighborhood
+the neighborhood boundaries shift. `conformeR` wraps this neighborhood
 construction step in a conformal prediction layer so that this
-variability can be visualized rather than ignored.
+variability can be quantified rather than ignored.
 
 It provides two complementary views of that uncertainty:
 
 - **Conformal selection** asks, for a given gene, *which cells can we
   confidently say belong to the affected neighborhood?* It returns a
-  data-driven subset of cells with, in the presence of true labels, a guaranteed bound on the
+  data-driven subset of cells with a guaranteed bound on the
   proportion of false inclusions.
 - **Conformal clustering** asks the finer-grained question, *for each
-  cell, what are plausible neighborhood assignment?* It
-  returns a prediction *set* of plausible neighborhood per cell,
-  which can contain zero or one label.
+  cell, how uncertain are we about its neighborhood assignment?* It
+  returns a prediction *set* of plausible neighborhoods per cell,
+  which can contain zero, one, or several labels.
 
 <div class="callout">
 <p>**Why this matters.** A single LEMUR fit gives you one particular
 neighborhood assignment, with no way to tell how much of it would
-survive resampling. `conformeR` makes visible the uncertainty that comes with the estimated labels.</p>
+survive resampling. `conformeR` turns that single assignment into a
+statement with a formal, finite-sample coverage guarantee.</p>
+</div>
+
+### A caveat: the guarantee assumes true labels
+
+The coverage guarantees behind conformal prediction are proven under
+the assumption that the training and calibration sets carry the
+*true* neighborhood label for each cell. That assumption is exactly
+what motivates reaching for conformal prediction here in the first
+place — but it is also never satisfied in practice: we do not observe
+the true neighborhood membership of any cell. What we have instead is
+LEMUR's own predicted neighborhood assignment, which we use as a
+proxy label for both training and calibration. That proxy is a
+*noisy* version of the true label, and the two conformal procedures
+degrade differently under that noise:
+
+- **Conformal clustering** stays conservative. Calibrating against a
+  noisy label inflates the non-conformity scores, so the procedure
+  compensates by returning more prediction sets of size 2 — i.e. it
+  more often declines to commit to a neighborhood — rather than
+  silently under-covering. The formal guarantee effectively still
+  holds, at the cost of more "I don't know" answers.
+- **Conformal selection** has no such built-in safety valve. Its
+  validity relies directly on LEMUR's predicted neighborhoods not
+  being *too* wrong: if LEMUR's assignment is systematically biased
+  rather than just noisy, the selected neighborhood inherits that
+  bias. In practice this means conformal selection results are only
+  as trustworthy as the underlying LEMUR fit.
+
+<div class="callout">
+<p>**Practical takeaway.** Read a size-2 prediction set from conformal
+clustering as the procedure protecting itself against label noise,
+not as evidence that a cell has no meaningful neighborhood. Read a
+conformal selection result with an eye on LEMUR fit quality first —
+e.g. convergence diagnostics, embedding dimensionality — since that
+fit stands in for ground truth throughout.</p>
 </div>
 
 ```{r setup}
@@ -182,8 +219,10 @@ points to a more localized effect.
 ## Conformal clustering: how confident is each cell's assignment?
 
 Conformal clustering instead reports, per cell, a *prediction set*:
-the neighborhoods that cell could plausibly belong to. A prediction set of size zero means the procedure could not
-confidently assign that cell to any neighborhood; the cell is ambiguous.
+the neighborhoods that cell could plausibly belong to at the target
+coverage. A prediction set of size zero means the procedure could not
+confidently assign that cell to any neighborhood; larger sets reflect
+more ambiguous cells.
 
 ```{r clustering-summary}
 clustering_summary <- cp_res |>
@@ -191,7 +230,7 @@ clustering_summary <- cp_res |>
   summarize(
     `Prediction set = inside`  = sum(inside_cc == 1),
     `Prediction set = outside` = sum(outside_cc == 1),
-    `Prediction set size 0`    = sum(inside_cc + outside_cc == 0),
+    `Prediction set size 2`    = sum(inside_cc + outside_cc == 0),
     .groups = "drop"
   )
 
@@ -201,8 +240,13 @@ kable(clustering_summary, caption = "Conformal clustering: prediction set compos
 Reading this table alongside the selection table above shows where
 the two procedures agree (a gene with a large, confident
 neighborhood in both) and where they diverge (a gene with a sizeable
-selected neighborhood but many size-0 or ambiguous cells under
-clustering, which flags instability worth a closer look).
+selected neighborhood but many size-2 or ambiguous cells under
+clustering, which flags instability worth a closer look). Recall from
+the caveat above that a high count of size-2 sets is, by design, the
+clustering procedure's response to calibrating against LEMUR's noisy
+neighborhood labels rather than the true ones — so treat it as a
+built-in conservatism, not necessarily a sign that something is wrong
+with the gene's effect.
 
 ## Visualizing results on the LEMUR embedding
 
@@ -214,7 +258,8 @@ plotter_conformal_selection(res, pan_affect_genes$gid)
 
 Cells shaded as part of the selected neighborhood are those the
 procedure can confidently attribute to the condition effect for that
-gene; unshaded cells fall outside the selection.
+gene; unshaded cells fall outside the guaranteed selection at the
+chosen coverage level.
 
 ### Conformal clustering
 
