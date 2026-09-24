@@ -1,0 +1,20 @@
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/articles/conformeR-introduction.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/conformal_lemur.html</loc></url>
+<url><loc>/reference/conformeR.html</loc></url>
+<url><loc>/reference/data_processing.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/plotter_conformal_clustering.html</loc></url>
+<url><loc>/reference/plotter_conformal_selection.html</loc></url>
+<url><loc>/reference/predict_classifier.html</loc></url>
+<url><loc>/reference/scale_color_de_gradient.html</loc></url>
+<url><loc>/reference/sce_vignette.html</loc></url>
+<url><loc>/reference/signif_to_zero.html</loc></url>
+<url><loc>/reference/small_axis.html</loc></url>
+<url><loc>/reference/train_classifier.html</loc></url>
+</urlset>
+

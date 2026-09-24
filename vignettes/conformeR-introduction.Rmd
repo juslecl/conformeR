@@ -1,27 +1,65 @@
 ---
-title: "conformeR-introduction"
+title: "Getting Started with conformeR"
 author: "Justine Leclerc and Christof Seiler"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{conformeR-introduction}
+  %\VignetteIndexEntry{Getting Started with conformeR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
-conformeR provides conformal prediction layers for the cell neighborhood construction step of the LEMUR framework. It implements two complementary approaches, conformal clustering and conformal selection, to quantify uncertainty in the resulting cell neighborhoods, together with tools for visualizing and interpreting the resulting uncertainty sets.
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   dev = "png",
-  fig.width = 15,
-  fig.height = 8,
-  out.width = "100%"
+  fig.width = 12,
+  fig.height = 7,
+  out.width = "100%",
+  warning = FALSE,
+  message = FALSE
 )
 ```
 
-To install conformeR, run into your console:
+```{css, echo = FALSE}
+.callout {
+  border-left: 4px solid #4472A8;
+  background-color: #F2F6FA;
+  padding: 0.6em 1em;
+  margin: 1em 0;
+  border-radius: 2px;
+}
+.callout p {
+  margin: 0.3em 0;
+}
+```
+
+## Overview
+
+`LEMUR` fits a low-dimensional embedding and builds *neighborhood* of cells sharing a same response for a defined contrast and gene. Because this
+assignment is itself the output of a fitted model, it inherits sampling
+variability: refit the model on a slightly different draw of cells, and
+the neighborhood boundaries may shift. `conformeR` wraps this neighborhood
+construction step in a conformal prediction layer so that this
+variability can be visualized rather than ignored.
+
+It provides two complementary views of that uncertainty:
+
+- **Conformal selection** asks, for a given gene, *which cells can we
+  confidently say belong to the affected neighborhood?* It returns a
+  data-driven subset of cells with, in the presence of true labels, a guaranteed bound on the
+  proportion of false inclusions.
+- **Conformal clustering** asks the finer-grained question, *for each
+  cell, what are plausible neighborhood assignment?* It
+  returns a prediction *set* of plausible neighborhood per cell,
+  which can contain zero or one label.
+
+<div class="callout">
+<p>**Why this matters.** A single LEMUR fit gives you one particular
+neighborhood assignment, with no way to tell how much of it would
+survive resampling. `conformeR` makes visible the uncertainty that comes with the estimated labels.</p>
+</div>
+
 ```{r setup}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 if (!requireNamespace("conformeR", quietly = TRUE)) {
@@ -31,33 +69,74 @@ library(conformeR)
 library(dplyr)
 library(ggplot2)
 library(tibble)
+library(knitr)
 ```
 
-In this vignette, we run the package on a reduced version of the single-cell data by Zhao, W., Dovas, A., Spinazzi, E., et al. (2021). Deconvolution of cell type-specific drug responses in human tumor  tissue with single-cell RNA-seq. \emph{Genome Medicine}, 13, 82. (GEO accession: GSE148842).
+We use a consistent, minimal theme throughout the vignette so that the
+`conformeR` plots line up visually with the tables:
 
-As any input given to conformeR it has already been processes and quality checks were ran. 
+```{r theme}
+theme_set(
+  theme_minimal(base_size = 13) +
+    theme(
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(face = "bold"),
+      legend.position = "bottom"
+    )
+)
+conformer_palette <- c("inside" = "#4472A8", "outside" = "#D9822B", "none" = "#B0B0B0")
+```
 
-We first have a look at the data.
-```{r message=FALSE, warning=FALSE}
+## Example dataset
+
+This vignette runs `conformeR` on a reduced version of the single-cell
+RNA-seq dataset from Zhao, Dovas, Spinazzi, et al. (2021),
+*"Deconvolution of cell type-specific drug responses in human tumor
+tissue with single-cell RNA-seq,"* published in *Genome Medicine*
+(GEO accession `GSE148842`). As with any input to `conformeR`, the
+data have already been preprocessed and quality-checked upstream.
+
+```{r load-data}
 data("sce_vignette")
 sce_vignette
-
 head(colData(sce_vignette))
 ```
 
-We select some genes of interest.
-```{r message=FALSE, warning=FALSE}
+## Selecting genes of interest
+
+We restrict the analysis to three genes with distinct expected
+behavior, to illustrate a range of neighborhood sizes and
+uncertainty patterns: `HIST3H2A`, `PTPRZ1`, and `HBEGF`.
+
+```{r genes-of-interest}
 pan_affect_genes <- rowData(sce_vignette) %>%
   as_tibble() %>%
   dplyr::select(gid, gene) %>%
   filter(gene %in% c("HIST3H2A", "PTPRZ1", "HBEGF"))
 
-pan_affect_genes
+kable(pan_affect_genes, caption = "Genes of interest for this vignette")
 ```
 
+## Running conformeR
 
-Run the conformeR main function on the dataset. By default, target coverage for conformal prediction is of cp_alpha, data split proportions are fixed to 50% training set, of which 25% calibration set. This can be modified with arguments cp_train_frac and cp_cal_frac.
-```{r message=FALSE, warning=FALSE}
+`conformeR()` fits `LEMUR` and layers both conformal procedures on
+top of it in one call. The key arguments are:
+
+- `design_lemur` — the LEMUR design formula; here we adjust for
+  `patient_id` and estimate the effect of `condition`.
+- `contrast_column` — which column of the design defines the
+  contrast of interest.
+- `genes_of_interest` — restrict the (more expensive) conformal
+  layers to a gene subset; LEMUR itself is still fit genome-wide.
+- `what` — which conformal procedure(s) to run: `"conf_selection"`,
+  `"conf_clustering"`, or both.
+
+By default the target coverage is `cp_alpha`, and the data are split
+50% training / 50% calibration+test, with the calibration set taking
+25 percentage points of the total (`cp_train_frac` and `cp_cal_frac`
+override these proportions).
+
+```{r run-conformer}
 set.seed(2002)
 res <- conformeR(
   sce_vignette,
@@ -69,28 +148,87 @@ res <- conformeR(
   verbose = TRUE
 )
 ```
-We look at the conformal layer results.
-```{r}
+
+```{r tidy-results}
 cp_res <- res$conf_results |>
-  left_join(pan_affect_genes, by=c("gene"="gid")) |>
-  dplyr::select(-gene)|>
-  dplyr::rename(gene=`gene.y`)
+  left_join(pan_affect_genes, by = c("gene" = "gid")) |>
+  dplyr::select(-gene) |>
+  dplyr::rename(gene = gene.y)
 ```
 
-What is the size of conformal selection for each gene? How much of the cell sample does it represent?
-```{r message=FALSE, warning=FALSE}
-cp_res |> group_by(gene) |> summarize("Size neighborhood"=sum(inside_cs),"% neighborhood"=round(sum(inside_cs)/ncol(res$fit_lemur),2)*100)
+## Conformal selection: how big is the affected neighborhood?
+
+For each gene, conformal selection returns the set of cells flagged
+as belonging to the neighborhood affected by `condition`, at the
+target coverage level. The table below reports both the raw
+neighborhood size and its share of all cells in the fitted embedding.
+
+```{r selection-summary}
+selection_summary <- cp_res |>
+  group_by(gene) |>
+  summarize(
+    `Neighborhood size` = sum(inside_cs),
+    `% of cells` = round(sum(inside_cs) / ncol(res$fit_lemur), 2) * 100,
+    .groups = "drop"
+  )
+
+kable(selection_summary, caption = "Conformal selection: neighborhood size per gene")
 ```
-What is the size of the prediction sets for each gene?
-```{r message=FALSE, warning=FALSE}
-cp_res |> group_by(gene) |> summarize("Prediction sets = inside"=sum((inside_cc==1)),"Prediction sets = outside"=sum((outside_cc==1)),"Prediction sets size 0"=sum(inside_cc+outside_cc==0))
+
+A larger `% of cells` means the gene's condition effect is detected
+across a broader swath of the embedding; a small, tight neighborhood
+points to a more localized effect.
+
+## Conformal clustering: how confident is each cell's assignment?
+
+Conformal clustering instead reports, per cell, a *prediction set*:
+the neighborhoods that cell could plausibly belong to. A prediction set of size zero means the procedure could not
+confidently assign that cell to any neighborhood; the cell is ambiguous.
+
+```{r clustering-summary}
+clustering_summary <- cp_res |>
+  group_by(gene) |>
+  summarize(
+    `Prediction set = inside`  = sum(inside_cc == 1),
+    `Prediction set = outside` = sum(outside_cc == 1),
+    `Prediction set size 0`    = sum(inside_cc + outside_cc == 0),
+    .groups = "drop"
+  )
+
+kable(clustering_summary, caption = "Conformal clustering: prediction set composition per gene")
 ```
-We plot the conformal selection on top of LEMUR neighborhoods.
-```{r message=FALSE, warning=FALSE}
+
+Reading this table alongside the selection table above shows where
+the two procedures agree (a gene with a large, confident
+neighborhood in both) and where they diverge (a gene with a sizeable
+selected neighborhood but many size-0 or ambiguous cells under
+clustering, which flags instability worth a closer look).
+
+## Visualizing results on the LEMUR embedding
+
+### Conformal selection
+
+```{r plot-selection, fig.cap = "Conformal selection overlaid on LEMUR neighborhoods, one panel per gene."}
 plotter_conformal_selection(res, pan_affect_genes$gid)
 ```
 
-Finally, we plot conformal clustering on top of LEMUR neighborhoods.
-```{r message=FALSE, warning=FALSE}
+Cells shaded as part of the selected neighborhood are those the
+procedure can confidently attribute to the condition effect for that
+gene; unshaded cells fall outside the selection.
+
+### Conformal clustering
+
+```{r plot-clustering, fig.cap = "Conformal prediction sets overlaid on LEMUR neighborhoods, one panel per gene."}
 plotter_conformal_clustering(res, pan_affect_genes$gid)
+```
+
+Here color reflects the prediction set itself rather than a single
+hard assignment, making it easy to spot the boundary regions where
+neighborhood membership is genuinely uncertain versus the core
+regions where every resampling agrees.
+
+## Session info
+
+```{r session-info}
+sessionInfo()
 ```
