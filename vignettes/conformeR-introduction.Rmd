@@ -1,6 +1,6 @@
 ---
 title: "conformeR-introduction"
-author: "Justine Leclerc"
+author: "Justine Leclerc and Christof Seiler"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{conformeR-introduction}
@@ -24,7 +24,9 @@ knitr::opts_chunk$set(
 To install conformeR, run into your console:
 ```{r setup}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-devtools::install_github("https://github.com/juslecl/conformeR")
+if (!requireNamespace("conformeR", quietly = TRUE)) {
+  devtools::install_github("https://github.com/juslecl/conformeR")
+}
 library(conformeR)
 library(dplyr)
 library(ggplot2)

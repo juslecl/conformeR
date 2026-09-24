@@ -236,7 +236,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
         ) +
         ggplot2::scale_color_manual(
           values = c(
-            "2" = "grey",
+            "0" = "grey",
             "1" = "black"
           ),
           name = "Set size",
