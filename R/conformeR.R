@@ -22,8 +22,6 @@
 #' @param cp_alpha Miscoverage level for the conformal procedures.
 #' @param genes_of_interest Character vector containing the names of genes
 #' to include in the conformal analysis.They need to correspond to the row names of the sce.
-#' @param eps_corruption Label corruption level estimate used in the conformal
-#' procedures (vector of length length(genes_of_interest)).
 #' @param what Character vector specifying the conformal procedure(s) to run.
 #' @param n_cores Number of cores used for parallel processing.
 #' @param verbose Logical indicating whether to display progress information.
