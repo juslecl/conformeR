@@ -136,6 +136,7 @@ data have already been preprocessed and quality-checked upstream.
 ```{r load-data}
 data("sce_vignette")
 sce_vignette
+rownames(sce_vignette) <- rowData(sce_vignette)$gene
 head(colData(sce_vignette))
 ```
 
@@ -253,7 +254,7 @@ with the gene's effect.
 ### Conformal selection
 
 ```{r plot-selection, fig.cap = "Conformal selection overlaid on LEMUR neighborhoods, one panel per gene."}
-plotter_conformal_selection(res, pan_affect_genes$gid)
+plotter_conformal_selection(res, pan_affect_genes$gene)
 ```
 
 Cells shaded as part of the selected neighborhood are those the
@@ -264,7 +265,7 @@ chosen coverage level.
 ### Conformal clustering
 
 ```{r plot-clustering, fig.cap = "Conformal prediction sets overlaid on LEMUR neighborhoods, one panel per gene."}
-plotter_conformal_clustering(res, pan_affect_genes$gid)
+plotter_conformal_clustering(res, pan_affect_genes$gene)
 ```
 
 Here color reflects the prediction set itself rather than a single
