@@ -11,8 +11,7 @@ conformal_lemur(
   nei_train,
   nei_cal,
   what,
-  alpha,
-  epsilon
+  alpha
 )
 }
 \arguments{

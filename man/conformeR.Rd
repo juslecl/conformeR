@@ -52,9 +52,6 @@ to include in the conformal analysis.They need to correspond to the row names of
 \item{verbose}{Logical indicating whether to display progress information.}
 
 \item{constrast_levels}{when \code{contrast_column} has more than two levels, specify which two are tested again each other.}
-
-\item{eps_corruption}{Label corruption level estimate used in the conformal
-procedures (vector of length length(genes_of_interest)).}
 }
 \value{
 A list containing:
