@@ -129,4 +129,3 @@ predict_classifier <- function(trained_classifier, pred_sce, gene_name){
   # unevaluated cond(column = levels[1]) - cond(column = levels[2])
   rlang::expr(!!make_cond_call(levels[1]) - !!make_cond_call(levels[2]))
 }
-

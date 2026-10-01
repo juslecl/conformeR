@@ -2,7 +2,7 @@
 % Please edit documentation in R/cp_utils.R
 \name{train_classifier}
 \alias{train_classifier}
-\title{Train a gene-specific classifier from LEMUR neighborhoods}
+\title{Train a gene-specific ridge classifier from LEMUR neighborhoods}
 \usage{
 train_classifier(pred_train, nei_train, gene_name)
 }
@@ -20,16 +20,18 @@ classifier is trained.}
 \value{
 A list containing:
 \describe{
-\item{\code{fit}}{The fitted binomial logistic regression model.}
-\item{\code{pca}}{The PCA object fitted to the predictors.}
-\item{\code{k}}{The number of principal components retained, explaining
-more than 90\% of the total variance.}
+\item{\code{fit}}{The fitted \code{glmnet::cv.glmnet} ridge-penalized
+binomial model.}
+\item{\code{lambda}}{The regularization strength selected by
+cross-validation (\code{fit$lambda.1se}: the largest \code{lambda} within
+one standard error of the minimum cross-validated deviance).}
 }
 }
 \description{
-Trains a logistic regression classifier to predict LEMUR neighborhood
-membership for a given gene. The classifier uses gene-level differential
-expression and the LEMUR embedding as predictors. Principal component
-analysis is applied to the predictors, retaining the components explaining
-more than 90\% of the total variance.
+Trains an L2-penalized ("ridge") logistic regression classifier to predict
+LEMUR neighborhood membership for a given gene. The classifier uses
+gene-level differential expression and the LEMUR embedding as predictors,
+with no dimensionality reduction: the ridge penalty itself handles the
+resulting collinearity/high dimensionality. The penalty strength
+(\code{lambda}) is chosen by cross-validation.
 }

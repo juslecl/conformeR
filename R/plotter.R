@@ -221,7 +221,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
 
   de_plot_data_in <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
     dplyr::mutate(umap = umap_fit) %>%
-    dplyr::mutate(de = tibble::as_tibble(t(assay(fit_small, "DE")))) %>%
+    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) %>%
     tidyr::unnest(de, names_sep = "-") %>%
     tidyr::pivot_longer(starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) %>%
     dplyr::mutate(gene = factor(gene)) %>%
@@ -301,7 +301,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
 
   de_plot_data_out <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
     dplyr::mutate(umap = umap_fit) %>%
-    dplyr::mutate(de = tibble::as_tibble(t(assay(fit_small, "DE")))) %>%
+    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) %>%
     tidyr::unnest(de, names_sep = "-") %>%
     tidyr::pivot_longer(starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) %>%
     dplyr::mutate(gene = factor(gene)) %>%

@@ -27,8 +27,9 @@ A data frame containing:
 }
 }
 \description{
-Applies a trained gene-specific classifier to new cells. The differential
-expression values and LEMUR embedding are projected onto the principal
-components learned during training. The retained components are then used
-to predict the probability of neighborhood membership for each cell.
+Applies a trained gene-specific ridge classifier to new cells. The
+differential expression values and LEMUR embedding are assembled into the
+same predictor matrix used at training time, and used to predict the
+probability of neighborhood membership for each cell at the
+cross-validated \code{lambda}.
 }
