@@ -1,6 +1,6 @@
 # conformeR
 
-Conformalized differential expression analysis of multi-condition single-cell data.
+Conformal clustering of gene differential expression.
 
 `conformeR` is a wrapper around the [LEMUR](https://github.com/const-ae/lemur) R package that adds
 uncertainty quantification to LEMUR's neighborhood on predicted differential expression, using conformal prediction, and without
@@ -36,3 +36,6 @@ or, from the R console:
 ```r
 vignette("conformeR")
 ```
+
+## Paper
+Stay tuned!
