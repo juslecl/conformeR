@@ -180,18 +180,11 @@ res <- conformeR(
   sce_vignette,
   design_lemur = ~ patient_id + condition,
   contrast_column = "condition",
-  genes_of_interest = pan_affect_genes$gid,
+  genes_of_interest = pan_affect_genes$gene,
   what = c("conf_selection", "conf_clustering"),
   n_cores = 1,
   verbose = TRUE
 )
-```
-
-```{r tidy-results}
-cp_res <- res$conf_results |>
-  left_join(pan_affect_genes, by = c("gene" = "gid")) |>
-  dplyr::select(-gene) |>
-  dplyr::rename(gene = gene.y)
 ```
 
 ## Conformal selection: how big is the affected neighborhood?
@@ -202,7 +195,7 @@ target coverage level. The table below reports both the raw
 neighborhood size and its share of all cells in the fitted embedding.
 
 ```{r selection-summary}
-selection_summary <- cp_res |>
+selection_summary <- res$conf_results |>
   group_by(gene) |>
   summarize(
     `Neighborhood size` = sum(inside_cs),
@@ -226,12 +219,12 @@ confidently assign that cell to any neighborhood; larger sets reflect
 more ambiguous cells.
 
 ```{r clustering-summary}
-clustering_summary <- cp_res |>
+clustering_summary <- res$conf_results |>
   group_by(gene) |>
   summarize(
-    `Prediction set = inside`  = sum(inside_cc == 1),
-    `Prediction set = outside` = sum(outside_cc == 1),
-    `Prediction set size 2`    = sum(inside_cc + outside_cc == 0),
+    `Prediction set = inside`  = sum(inside_cc + outside_cc ==1 & inside_cc == 1),
+    `Prediction set = outside` = sum(inside_cc + outside_cc ==1 & outside_cc == 1),
+    `Prediction set size 2`    = sum(inside_cc + outside_cc !=1),
     .groups = "drop"
   )
 
