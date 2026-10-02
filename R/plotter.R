@@ -63,13 +63,13 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
         )
 
       p <- ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
-          ggplot2::geom_point(
-            ggplot2::aes(
-              color = de,
-              alpha = scales::rescale(abs(de), to = c(0.05, 1))
-            ),
-            size = 0.5
-          ) +
+        ggplot2::geom_point(
+          ggplot2::aes(
+            color = de,
+            alpha = scales::rescale(abs(de), to = c(0.05, 1))
+          ),
+          size = 0.5
+        ) +
         ggplot2::scale_alpha_identity() +
         scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
         ggnewscale::new_scale_color() +
@@ -235,13 +235,13 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
       data$gene <- key[[1]][1]
 
       ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
-          ggplot2::geom_point( data = data |> dplyr::filter(neighborhood),
-                               ggplot2::aes(
-                                 color = de,
-                                 alpha = pmin(abs(de) / (0.3 * abs_max), 1)
-                               ),
-                               size = 0.5
-          ) +
+        ggplot2::geom_point( data = data |> dplyr::filter(neighborhood),
+                             ggplot2::aes(
+                               color = de,
+                               alpha = pmin(abs(de) / (0.3 * abs_max), 1)
+                             ),
+                             size = 0.5
+        ) +
         ggplot2::scale_alpha_identity() +
         scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
 
@@ -315,13 +315,13 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
       data$gene <- key[[1]][1]
 
       ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
-          ggplot2::geom_point( data = data |> dplyr::filter(!neighborhood),
-                               ggplot2::aes(
-                                 color = de,
-                                 alpha = pmin(abs(de) / (0.3 * abs_max), 1)
-                               ),
-                               size = 0.5
-          ) +
+        ggplot2::geom_point( data = data |> dplyr::filter(!neighborhood),
+                             ggplot2::aes(
+                               color = de,
+                               alpha = pmin(abs(de) / (0.3 * abs_max), 1)
+                             ),
+                             size = 0.5
+        ) +
         ggplot2::scale_alpha_identity() +
         scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
 
@@ -406,9 +406,9 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
   set_size_legend <- cowplot::get_legend(
     ggplot2::ggplot(
       data.frame(
-        x = c(1, 2, 1, 2),
-        y = c(1, 1, 2, 2),
-        grp = factor(c("1", "1", "2", "2"))
+        x = c(1, 0, 1, 0),
+        y = c(1, 1, 0, 0),
+        grp = factor(c("1", "1", "0", "0"))
       ),
       ggplot2::aes(x = x, y = y, color = grp, group = grp)
     ) +
@@ -434,4 +434,4 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
     ncol = 1,
     rel_heights = c(1, 0.06)
   )
-    }
+}
