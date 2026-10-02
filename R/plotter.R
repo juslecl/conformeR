@@ -64,6 +64,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
 
       p <- ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
         ggplot2::geom_point(
+          data = dplyr::filter(data, neighborhood),
           ggplot2::aes(
             color = de,
             alpha = scales::rescale(abs(de), to = c(0.05, 1))
@@ -198,36 +199,21 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
   conf_nei_df <- conformer_output$conf_results |>
     dplyr::filter(gene %in% genes_to_plot) |>
     dplyr::left_join(nei, by=c("cell","gene"="name")) |>
-    dplyr::select(gene,neighborhood,cell,inside_cc,outside_cc)
+    dplyr::select(gene,neighborhood,cell,inside_cc,outside_cc) |>
+    dplyr::mutate(set_size = inside_cc + outside_cc)
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
 
-  data_inside <- conf_nei_df |>
-    dplyr::mutate(set_size=inside_cc + outside_cc) |>
-    dplyr::filter((set_size==1 & inside_cc==TRUE)|set_size!=1) |>
-    dplyr::mutate("Set size"=as.factor(set_size))|>
-    dplyr::left_join(
-      as.data.frame(umap_fit) |> tibble::rownames_to_column("cell"),
-      by = "cell"
-    )
-
-  data_outside <- conf_nei_df |>
-    dplyr::mutate(set_size=inside_cc + outside_cc) |>
-    dplyr::filter((set_size==1 & inside_cc==FALSE)|set_size!=1) |>
-    dplyr::mutate("Set size"=as.factor(set_size)) |>
-    dplyr::left_join(
-      as.data.frame(umap_fit) |> tibble::rownames_to_column("cell"),
-      by = "cell"
-    )
-
-  de_plot_data_in <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
+  # 2. Prepare data for plotting (shared by the Inside and Outside rows).
+  de_plot_data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
     dplyr::mutate(umap = umap_fit) %>%
     dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) %>%
     tidyr::unnest(de, names_sep = "-") %>%
     tidyr::pivot_longer(starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) %>%
     dplyr::mutate(gene = factor(gene)) %>%
-    dplyr::left_join(data_inside, by = c("gene", "cell"))
+    dplyr::left_join(conf_nei_df, by = c("gene", "cell"))
 
-  de_plots_in <- de_plot_data_in %>%
+  # 3. Inside row
+  de_plots_in <- de_plot_data %>%
     dplyr::group_by(gene) %>%
     dplyr::group_map(\(data, key){
 
@@ -247,7 +233,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
 
         ggnewscale::new_scale_color() +
 
-        ggplot2::geom_density_2d( data=data |> dplyr::filter(!is.na(set_size)),
+        ggplot2::geom_density_2d( data = data |>
+                                    dplyr::filter(set_size == 0 | (set_size == 1 & inside_cc)),
                                   ggplot2::aes(
                                     color = factor(set_size),
                                     group = factor(set_size)
@@ -299,15 +286,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
       rel_widths = rep(1.4, length(.))
     )
 
-  de_plot_data_out <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
-    dplyr::mutate(umap = umap_fit) %>%
-    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) %>%
-    tidyr::unnest(de, names_sep = "-") %>%
-    tidyr::pivot_longer(starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) %>%
-    dplyr::mutate(gene = factor(gene)) %>%
-    dplyr::left_join(data_outside, by = c("gene", "cell"))
-
-  de_plots_out <- de_plot_data_out %>%
+  # 4. Outside row
+  de_plots_out <- de_plot_data %>%
     dplyr::group_by(gene) %>%
     dplyr::group_map(\(data, key){
 
@@ -327,7 +307,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
 
         ggnewscale::new_scale_color() +
 
-        ggplot2::geom_density_2d( data=data |> dplyr::filter(!is.na(set_size)),
+        ggplot2::geom_density_2d( data = data |>
+                                    dplyr::filter(set_size == 0 | (set_size == 1 & !inside_cc)),
                                   ggplot2::aes(
                                     color = factor(set_size),
                                     group = factor(set_size)
@@ -401,7 +382,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
     rel_widths = c(0.04, 1)
   )
 
-  # One shared "Set size" legend (black = 1, grey = 2) for the whole
+  # One shared "Set size" legend (black = 1, grey = 0) for the whole
   # combined Inside/Outside figure, built from a throwaway plot.
   set_size_legend <- cowplot::get_legend(
     ggplot2::ggplot(
