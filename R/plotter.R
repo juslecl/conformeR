@@ -182,7 +182,8 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
 #' @return A single combined \code{ggplot}/\code{cowplot} object: the
 #' "Inside" panel row stacked above the "Outside" panel row, each row
 #' labeled accordingly, with one shared "Set size" legend (black = set
-#' size 1, grey = set size 2) below the combined grid.
+#' size 1, grey = the other set size observed in the data) below the
+#' combined grid.
 #'
 #' @export
 plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
@@ -202,6 +203,13 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
     dplyr::select(gene,neighborhood,cell,inside_cc,outside_cc) |>
     dplyr::mutate(set_size = inside_cc + outside_cc)
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
+
+  # Set sizes present in the data: black is always 1, grey is whatever else occurs (0 or 2).
+  other_sizes <- setdiff(sort(unique(stats::na.omit(conf_nei_df$set_size))), 1)
+  set_size_colors <- c(
+    "1" = "black",
+    stats::setNames(rep("grey", length(other_sizes)), as.character(other_sizes))
+  )
 
   # 2. Prepare data for plotting (shared by the Inside and Outside rows).
   de_plot_data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
@@ -234,7 +242,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
         ggnewscale::new_scale_color() +
 
         ggplot2::geom_density_2d( data = data |>
-                                    dplyr::filter(set_size == 0 | (set_size == 1 & inside_cc)),
+                                    dplyr::filter(set_size != 1 | inside_cc),
                                   ggplot2::aes(
                                     color = factor(set_size),
                                     group = factor(set_size)
@@ -243,10 +251,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
                                   show.legend = FALSE
         ) +
         ggplot2::scale_color_manual(
-          values = c(
-            "0" = "grey",
-            "1" = "black"
-          ),
+          values = set_size_colors,
           name = "Set size",
           guide = "none"
         ) +
@@ -308,7 +313,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
         ggnewscale::new_scale_color() +
 
         ggplot2::geom_density_2d( data = data |>
-                                    dplyr::filter(set_size == 0 | (set_size == 1 & !inside_cc)),
+                                    dplyr::filter(set_size != 1 | !inside_cc),
                                   ggplot2::aes(
                                     color = factor(set_size),
                                     group = factor(set_size)
@@ -317,10 +322,7 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
                                   show.legend = FALSE
         ) +
         ggplot2::scale_color_manual(
-          values = c(
-            "0" = "grey",
-            "1" = "black"
-          ),
+          values = set_size_colors,
           name = "Set size",
           guide = "none"
         ) +
@@ -382,20 +384,21 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
     rel_widths = c(0.04, 1)
   )
 
-  # One shared "Set size" legend (black = 1, grey = 0) for the whole
-  # combined Inside/Outside figure, built from a throwaway plot.
+  # One shared "Set size" legend (black = 1, grey = the other set size found in the data).
+  legend_df <- data.frame(
+    x = rep(c(1, 0), times = length(set_size_colors)),
+    y = rep(seq_along(set_size_colors) - 1, each = 2),
+    grp = factor(rep(names(set_size_colors), each = 2), levels = names(set_size_colors))
+  )
+
   set_size_legend <- cowplot::get_legend(
     ggplot2::ggplot(
-      data.frame(
-        x = c(1, 0, 1, 0),
-        y = c(1, 1, 0, 0),
-        grp = factor(c("1", "1", "0", "0"))
-      ),
+      legend_df,
       ggplot2::aes(x = x, y = y, color = grp, group = grp)
     ) +
       ggplot2::geom_line(linewidth = 0.5) +
       ggplot2::scale_color_manual(
-        values = c("1" = "black", "0" = "grey"),
+        values = set_size_colors,
         name = "Set size"
       ) +
       ggplot2::theme(
