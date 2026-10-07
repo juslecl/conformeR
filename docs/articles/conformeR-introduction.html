@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>conformeR-introduction • conformeR</title>
+<title>Getting Started with conformeR • conformeR</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="conformeR-introduction">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Getting Started with conformeR">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -49,7 +49,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/conformeR-introduction.html">conformeR-introduction</a>
+      <a href="../articles/conformeR-introduction.html">Getting Started with conformeR</a>
     </li>
   </ul>
 </li>
@@ -67,7 +67,7 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>conformeR-introduction</h1>
+      <h1 data-toc-skip>Getting Started with conformeR</h1>
                         <h4 data-toc-skip class="author">Justine Leclerc
 and Christof Seiler</h4>
             
@@ -79,133 +79,126 @@ and Christof Seiler</h4>
 
     
     
-<p>conformeR provides conformal prediction layers for the cell
-neighborhood construction step of the LEMUR framework. It implements two
-complementary approaches, conformal clustering and conformal selection,
-to quantify uncertainty in the resulting cell neighborhoods, together
-with tools for visualizing and interpreting the resulting uncertainty
-sets.</p>
-<p>To install conformeR, run into your console:</p>
+<style type="text/css">
+.callout {
+  border-left: 4px solid #4472A8;
+  background-color: #F2F6FA;
+  padding: 0.6em 1em;
+  margin: 1em 0;
+  border-radius: 2px;
+}
+.callout p {
+  margin: 0.3em 0;
+}
+</style>
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
+<p><code>LEMUR</code> fits a low-dimensional embedding and assigns each
+cell to a <em>neighborhood</em> when they share a similar response to a
+given contrast and gene. Because this assignment is itself the output of
+a fitted model, it inherits sampling variability: refit the model on a
+slightly different draw of cells, and the neighborhood boundaries shift.
+<code>conformeR</code> wraps this neighborhood construction step in a
+conformal prediction layer so that this variability can be quantified
+rather than ignored.</p>
+<p>It provides two complementary views of that uncertainty:</p>
+<ul>
+<li>
+<strong>Conformal selection</strong> asks, for a given gene,
+<em>which cells can we confidently say belong to the affected
+neighborhood?</em> It returns a data-driven subset of cells with a
+guaranteed bound on the proportion of false inclusions.</li>
+<li>
+<strong>Conformal clustering</strong> asks the finer-grained
+question, <em>for each cell, how uncertain are we about its neighborhood
+assignment?</em> It returns a prediction <em>set</em> of plausible
+neighborhoods per cell, which can contain zero, one, or several
+labels.</li>
+</ul>
+<div class="callout">
+<p>
+<strong>Why this matters.</strong> A single LEMUR fit gives you one
+particular neighborhood assignment, with no way to tell how much of it
+would survive resampling. <code>conformeR</code> turns that single
+assignment into a statement with a formal, finite-sample coverage
+guarantee.
+</p>
+</div>
+<div class="section level3">
+<h3 id="a-caveat-the-guarantee-assumes-true-labels">A caveat: the guarantee assumes true labels<a class="anchor" aria-label="anchor" href="#a-caveat-the-guarantee-assumes-true-labels"></a>
+</h3>
+<p>The coverage guarantees behind conformal prediction are proven under
+the assumption that the training and calibration sets carry the
+<em>true</em> neighborhood label for each cell. That assumption is
+exactly what motivates reaching for conformal prediction here in the
+first place — but it is also never satisfied in practice: we do not
+observe the true neighborhood membership of any cell. What we have
+instead is LEMUR’s own predicted neighborhood assignment, which we use
+as a proxy label for both training and calibration. That proxy is a
+<em>noisy</em> version of the true label, and the two conformal
+procedures degrade differently under that noise:</p>
+<ul>
+<li>
+<strong>Conformal clustering</strong> stays conservative.
+Calibrating against a noisy label inflates the non-conformity scores, so
+the procedure compensates by returning more prediction sets of size 2 —
+i.e. it more often declines to commit to a neighborhood — rather than
+silently under-covering. The formal guarantee effectively still holds,
+at the cost of more “I don’t know” answers.</li>
+<li>
+<strong>Conformal selection</strong> has no such built-in safety
+valve. Its validity relies directly on LEMUR’s predicted neighborhoods
+not being <em>too</em> wrong: if LEMUR’s assignment is systematically
+biased rather than just noisy, the selected neighborhood inherits that
+bias. In practice this means conformal selection results are only as
+trustworthy as the underlying LEMUR fit.</li>
+</ul>
+<div class="callout">
+<p>
+<strong>Practical takeaway.</strong> Read a size-2 prediction set from
+conformal clustering as the procedure protecting itself against label
+noise, not as evidence that a cell has no meaningful neighborhood. Read
+a conformal selection result with an eye on LEMUR fit quality first —
+e.g. convergence diagnostics, embedding dimensionality — since that fit
+stands in for ground truth throughout.
+</p>
+</div>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>warning <span class="op">=</span> <span class="cn">FALSE</span>, message <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"conformeR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"https://github.com/juslecl/conformeR"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">conformeR</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: SingleCellExperiment</span></span>
-<span><span class="co">#&gt; Loading required package: SummarizedExperiment</span></span>
-<span><span class="co">#&gt; Loading required package: MatrixGenerics</span></span>
-<span><span class="co">#&gt; Loading required package: matrixStats</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'MatrixGenerics'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:matrixStats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse,</span></span>
-<span><span class="co">#&gt;     colCounts, colCummaxs, colCummins, colCumprods, colCumsums,</span></span>
-<span><span class="co">#&gt;     colDiffs, colIQRDiffs, colIQRs, colLogSumExps, colMadDiffs,</span></span>
-<span><span class="co">#&gt;     colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats,</span></span>
-<span><span class="co">#&gt;     colProds, colQuantiles, colRanges, colRanks, colSdDiffs, colSds,</span></span>
-<span><span class="co">#&gt;     colSums2, colTabulates, colVarDiffs, colVars, colWeightedMads,</span></span>
-<span><span class="co">#&gt;     colWeightedMeans, colWeightedMedians, colWeightedSds,</span></span>
-<span><span class="co">#&gt;     colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,</span></span>
-<span><span class="co">#&gt;     rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods,</span></span>
-<span><span class="co">#&gt;     rowCumsums, rowDiffs, rowIQRDiffs, rowIQRs, rowLogSumExps,</span></span>
-<span><span class="co">#&gt;     rowMadDiffs, rowMads, rowMaxs, rowMeans2, rowMedians, rowMins,</span></span>
-<span><span class="co">#&gt;     rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,</span></span>
-<span><span class="co">#&gt;     rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars,</span></span>
-<span><span class="co">#&gt;     rowWeightedMads, rowWeightedMeans, rowWeightedMedians,</span></span>
-<span><span class="co">#&gt;     rowWeightedSds, rowWeightedVars</span></span>
-<span><span class="co">#&gt; Loading required package: GenomicRanges</span></span>
-<span><span class="co">#&gt; Loading required package: stats4</span></span>
-<span><span class="co">#&gt; Loading required package: BiocGenerics</span></span>
-<span><span class="co">#&gt; Loading required package: generics</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'generics'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     as.difftime, as.factor, as.ordered, intersect, is.element, setdiff,</span></span>
-<span><span class="co">#&gt;     setequal, union</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'BiocGenerics'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     IQR, mad, sd, var, xtabs</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     anyDuplicated, aperm, append, as.data.frame, basename, cbind,</span></span>
-<span><span class="co">#&gt;     colnames, dirname, do.call, duplicated, eval, evalq, Filter, Find,</span></span>
-<span><span class="co">#&gt;     get, grep, grepl, is.unsorted, lapply, Map, mapply, match, mget,</span></span>
-<span><span class="co">#&gt;     order, paste, pmax, pmax.int, pmin, pmin.int, Position, rank,</span></span>
-<span><span class="co">#&gt;     rbind, Reduce, rownames, sapply, saveRDS, table, tapply, unique,</span></span>
-<span><span class="co">#&gt;     unsplit, which.max, which.min</span></span>
-<span><span class="co">#&gt; Loading required package: S4Vectors</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'S4Vectors'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:utils':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     findMatches</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     expand.grid, I, unname</span></span>
-<span><span class="co">#&gt; Loading required package: IRanges</span></span>
-<span><span class="co">#&gt; Loading required package: Seqinfo</span></span>
-<span><span class="co">#&gt; Loading required package: Biobase</span></span>
-<span><span class="co">#&gt; Welcome to Bioconductor</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     Vignettes contain introductory material; view with</span></span>
-<span><span class="co">#&gt;     'browseVignettes()'. To cite Bioconductor, see</span></span>
-<span><span class="co">#&gt;     'citation("Biobase")', and for packages 'citation("pkgname")'.</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'Biobase'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:MatrixGenerics':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     rowMedians</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:matrixStats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     anyMissing, rowMedians</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:Biobase':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     combine</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:GenomicRanges':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     intersect, setdiff, union</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:Seqinfo':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     intersect</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:IRanges':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     collapse, desc, intersect, setdiff, slice, union</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:S4Vectors':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     first, intersect, rename, setdiff, setequal, union</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:BiocGenerics':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     combine, intersect, setdiff, setequal, union</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:generics':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     explain</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:matrixStats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     count</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     filter, lag</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tibble.tidyverse.org/" class="external-link">tibble</a></span><span class="op">)</span></span></code></pre></div>
-<p>In this vignette, we run the package on a reduced version of the
-single-cell data by Zhao, W., Dovas, A., Spinazzi, E., et al. (2021).
-Deconvolution of cell type-specific drug responses in human tumor tissue
-with single-cell RNA-seq. , 13, 82. (GEO accession: GSE148842).</p>
-<p>As any input given to conformeR it has already been processes and
-quality checks were ran.</p>
-<p>We first have a look at the data.</p>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tibble.tidyverse.org/" class="external-link">tibble</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span></code></pre></div>
+<p>We use a consistent, minimal theme throughout the vignette so that
+the <code>conformeR</code> plots line up visually with the tables:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">theme_set</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">13</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>      panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>      plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span>,</span>
+<span>      legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">conformer_palette</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"inside"</span> <span class="op">=</span> <span class="st">"#4472A8"</span>, <span class="st">"outside"</span> <span class="op">=</span> <span class="st">"#D9822B"</span>, <span class="st">"none"</span> <span class="op">=</span> <span class="st">"#B0B0B0"</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="example-dataset">Example dataset<a class="anchor" aria-label="anchor" href="#example-dataset"></a>
+</h2>
+<p>This vignette runs <code>conformeR</code> on a reduced version of the
+single-cell RNA-seq dataset from Zhao, Dovas, Spinazzi, et al. (2021),
+<em>“Deconvolution of cell type-specific drug responses in human tumor
+tissue with single-cell RNA-seq,”</em> published in <em>Genome
+Medicine</em> (GEO accession <code>GSE148842</code>). As with any input
+to <code>conformeR</code>, the data have already been preprocessed and
+quality-checked upstream.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sce_vignette"</span><span class="op">)</span></span>
 <span><span class="va">sce_vignette</span></span>
 <span><span class="co">#&gt; class: SingleCellExperiment </span></span>
@@ -220,7 +213,7 @@ quality checks were ran.</p>
 <span><span class="co">#&gt; reducedDimNames(0):</span></span>
 <span><span class="co">#&gt; mainExpName: NULL</span></span>
 <span><span class="co">#&gt; altExpNames(0):</span></span>
-<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sce_vignette</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">rowData</span><span class="op">(</span><span class="va">sce_vignette</span><span class="op">)</span><span class="op">$</span><span class="va">gene</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">colData</span><span class="op">(</span><span class="va">sce_vignette</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; DataFrame with 6 rows and 3 columns</span></span>
 <span><span class="co">#&gt;                cell_type   condition  patient_id</span></span>
@@ -231,71 +224,297 @@ quality checks were ran.</p>
 <span><span class="co">#&gt; cell 68550 Myeloid cells        ctrl       PW034</span></span>
 <span><span class="co">#&gt; cell 76008 Myeloid cells        ctrl       PW034</span></span>
 <span><span class="co">#&gt; cell 19112   Tumor cells        ctrl       PW030</span></span></code></pre></div>
-<p>We select some genes of interest.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+</div>
+<div class="section level2">
+<h2 id="selecting-genes-of-interest">Selecting genes of interest<a class="anchor" aria-label="anchor" href="#selecting-genes-of-interest"></a>
+</h2>
+<p>We restrict the analysis to three genes with distinct expected
+behavior, to illustrate a range of neighborhood sizes and uncertainty
+patterns: <code>HIST3H2A</code>, <code>PTPRZ1</code>, and
+<code>HBEGF</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pan_affect_genes</span> <span class="op">&lt;-</span> <span class="fu">rowData</span><span class="op">(</span><span class="va">sce_vignette</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">gid</span>, <span class="va">gene</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">gene</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HIST3H2A"</span>, <span class="st">"PTPRZ1"</span>, <span class="st">"HBEGF"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">pan_affect_genes</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 2</span></span></span>
-<span><span class="co">#&gt;   gid             gene    </span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> ENSG00000106278 PTPRZ1  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ENSG00000113070 HBEGF   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> ENSG00000181218 HIST3H2A</span></span></code></pre></div>
-<p>Run the conformeR main function on the dataset. By default, target
-coverage for conformal prediction is of cp_alpha, data split proportions
-are fixed to 50% training set, of which 25% calibration set. This can be
-modified with arguments cp_train_frac and cp_cal_frac.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">pan_affect_genes</span>, caption <span class="op">=</span> <span class="st">"Genes of interest for this vignette"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Genes of interest for this vignette</caption>
+<thead><tr class="header">
+<th align="left">gid</th>
+<th align="left">gene</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">ENSG00000106278</td>
+<td align="left">PTPRZ1</td>
+</tr>
+<tr class="even">
+<td align="left">ENSG00000113070</td>
+<td align="left">HBEGF</td>
+</tr>
+<tr class="odd">
+<td align="left">ENSG00000181218</td>
+<td align="left">HIST3H2A</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="running-conformer">Running conformeR<a class="anchor" aria-label="anchor" href="#running-conformer"></a>
+</h2>
+<p><code><a href="../reference/conformeR.html">conformeR()</a></code> fits <code>LEMUR</code> and layers both
+conformal procedures on top of it in one call. The key arguments
+are:</p>
+<ul>
+<li>
+<code>design_lemur</code> — the LEMUR design formula; here we adjust
+for <code>patient_id</code> and estimate the effect of
+<code>condition</code>.</li>
+<li>
+<code>contrast_column</code> — which column of the design defines
+the contrast of interest.</li>
+<li>
+<code>genes_of_interest</code> — restrict the (more expensive)
+conformal layers to a gene subset; LEMUR itself is still fit
+genome-wide.</li>
+<li>
+<code>what</code> — which conformal procedure(s) to run:
+<code>"conf_selection"</code>, <code>"conf_clustering"</code>, or
+both.</li>
+</ul>
+<p>By default the target coverage is <code>cp_alpha</code>, and the data
+are split 50% training / 50% calibration+test, with the calibration set
+taking 25 percentage points of the total (<code>cp_train_frac</code> and
+<code>cp_cal_frac</code> override these proportions).</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2002</span><span class="op">)</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/conformeR.html">conformeR</a></span><span class="op">(</span></span>
 <span>  <span class="va">sce_vignette</span>,</span>
 <span>  design_lemur <span class="op">=</span> <span class="op">~</span> <span class="va">patient_id</span> <span class="op">+</span> <span class="va">condition</span>,</span>
 <span>  contrast_column <span class="op">=</span> <span class="st">"condition"</span>,</span>
-<span>  genes_of_interest <span class="op">=</span> <span class="va">pan_affect_genes</span><span class="op">$</span><span class="va">gid</span>,</span>
+<span>  genes_of_interest <span class="op">=</span> <span class="va">pan_affect_genes</span><span class="op">$</span><span class="va">gene</span>,</span>
 <span>  what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"conf_selection"</span>, <span class="st">"conf_clustering"</span><span class="op">)</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>We look at the conformal layer results.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cp_res</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">conf_results</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">pan_affect_genes</span>, by<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gene"</span><span class="op">=</span><span class="st">"gid"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">gene</span><span class="op">)</span><span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>gene<span class="op">=</span><span class="va">`gene.y`</span><span class="op">)</span></span></code></pre></div>
-<p>What is the size of conformal selection for each gene? How much of
-the cell sample does it represent?</p>
+</div>
+<div class="section level2">
+<h2 id="conformal-selection-how-big-is-the-affected-neighborhood">Conformal selection: how big is the affected neighborhood?<a class="anchor" aria-label="anchor" href="#conformal-selection-how-big-is-the-affected-neighborhood"></a>
+</h2>
+<p>For each gene, conformal selection returns the set of cells flagged
+as belonging to the neighborhood affected by <code>condition</code>, at
+the target coverage level. The table below reports both the raw
+neighborhood size and its share of all cells in the fitted
+embedding.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cp_res</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">gene</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span><span class="st">"Size neighborhood"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cs</span><span class="op">)</span>,<span class="st">"% neighborhood"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cs</span><span class="op">)</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">fit_lemur</span><span class="op">)</span>,<span class="fl">2</span><span class="op">)</span><span class="op">*</span><span class="fl">100</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
-<span><span class="co">#&gt;   gene     `Size neighborhood` `% neighborhood`</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> HBEGF                      4                0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> HIST3H2A                 374                7</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> PTPRZ1                  <span style="text-decoration: underline;">2</span>765               55</span></span></code></pre></div>
-<p>What is the size of the prediction sets for each gene?</p>
+<code class="sourceCode R"><span><span class="va">selection_summary</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">conf_results</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">gene</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
+<span>    `Neighborhood size` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cs</span><span class="op">)</span>,</span>
+<span>    `% of cells` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cs</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">fit_lemur</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>,</span>
+<span>    .groups <span class="op">=</span> <span class="st">"drop"</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">selection_summary</span>, caption <span class="op">=</span> <span class="st">"Conformal selection: neighborhood size per gene"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Conformal selection: neighborhood size per gene</caption>
+<thead><tr class="header">
+<th align="left">gene</th>
+<th align="right">Neighborhood size</th>
+<th align="right">% of cells</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">HBEGF</td>
+<td align="right">154</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="left">HIST3H2A</td>
+<td align="right">374</td>
+<td align="right">7</td>
+</tr>
+<tr class="odd">
+<td align="left">PTPRZ1</td>
+<td align="right">2763</td>
+<td align="right">55</td>
+</tr>
+</tbody>
+</table>
+<p>A larger <code>% of cells</code> means the gene’s condition effect is
+detected across a broader swath of the embedding; a small, tight
+neighborhood points to a more localized effect.</p>
+</div>
+<div class="section level2">
+<h2 id="conformal-clustering-how-confident-is-each-cells-assignment">Conformal clustering: how confident is each cell’s assignment?<a class="anchor" aria-label="anchor" href="#conformal-clustering-how-confident-is-each-cells-assignment"></a>
+</h2>
+<p>Conformal clustering instead reports, per cell, a <em>prediction
+set</em>: the neighborhoods that cell could plausibly belong to at the
+target coverage. A prediction set of size zero means the procedure could
+not confidently assign that cell to any neighborhood; larger sets
+reflect more ambiguous cells.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cp_res</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">gene</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span><span class="st">"Prediction sets = inside"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">inside_cc</span><span class="op">==</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>,<span class="st">"Prediction sets = outside"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">(</span><span class="va">outside_cc</span><span class="op">==</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span>,<span class="st">"Prediction sets size 0"</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cc</span><span class="op">+</span><span class="va">outside_cc</span><span class="op">==</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
-<span><span class="co">#&gt;   gene     Prediction sets = ins…¹ Prediction sets = ou…² Prediction sets size…³</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> HBEGF                        551                   <span style="text-decoration: underline;">4</span>198                    252</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> HIST3H2A                    <span style="text-decoration: underline;">1</span>715                   <span style="text-decoration: underline;">3</span>005                    281</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> PTPRZ1                      <span style="text-decoration: underline;">3</span>728                    986                    287</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ abbreviated names: ¹​`Prediction sets = inside`,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   ²​`Prediction sets = outside`, ³​`Prediction sets size 0`</span></span></span></code></pre></div>
-<p>We plot the conformal selection on top of LEMUR neighborhoods.</p>
+<code class="sourceCode R"><span><span class="va">clustering_summary</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">conf_results</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">gene</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span></span>
+<span>    `Prediction set = inside`  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cc</span> <span class="op">+</span> <span class="va">outside_cc</span> <span class="op">==</span><span class="fl">1</span> <span class="op">&amp;</span> <span class="va">inside_cc</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    `Prediction set = outside` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cc</span> <span class="op">+</span> <span class="va">outside_cc</span> <span class="op">==</span><span class="fl">1</span> <span class="op">&amp;</span> <span class="va">outside_cc</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    `Prediction set size 2`    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">inside_cc</span> <span class="op">+</span> <span class="va">outside_cc</span> <span class="op">!=</span><span class="fl">1</span><span class="op">)</span>,</span>
+<span>    .groups <span class="op">=</span> <span class="st">"drop"</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">clustering_summary</span>, caption <span class="op">=</span> <span class="st">"Conformal clustering: prediction set composition per gene"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Conformal clustering: prediction set composition per
+gene</caption>
+<colgroup>
+<col width="11%">
+<col width="30%">
+<col width="31%">
+<col width="27%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">gene</th>
+<th align="right">Prediction set = inside</th>
+<th align="right">Prediction set = outside</th>
+<th align="right">Prediction set size 2</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">HBEGF</td>
+<td align="right">551</td>
+<td align="right">4198</td>
+<td align="right">252</td>
+</tr>
+<tr class="even">
+<td align="left">HIST3H2A</td>
+<td align="right">1715</td>
+<td align="right">3005</td>
+<td align="right">281</td>
+</tr>
+<tr class="odd">
+<td align="left">PTPRZ1</td>
+<td align="right">3728</td>
+<td align="right">986</td>
+<td align="right">287</td>
+</tr>
+</tbody>
+</table>
+<p>Reading this table alongside the selection table above shows where
+the two procedures agree (a gene with a large, confident neighborhood in
+both) and where they diverge (a gene with a sizeable selected
+neighborhood but many size-2 or ambiguous cells under clustering, which
+flags instability worth a closer look). Recall from the caveat above
+that a high count of size-2 sets is, by design, the clustering
+procedure’s response to calibrating against LEMUR’s noisy neighborhood
+labels rather than the true ones — so treat it as a built-in
+conservatism, not necessarily a sign that something is wrong with the
+gene’s effect.</p>
+</div>
+<div class="section level2">
+<h2 id="visualizing-results-on-the-lemur-embedding">Visualizing results on the LEMUR embedding<a class="anchor" aria-label="anchor" href="#visualizing-results-on-the-lemur-embedding"></a>
+</h2>
+<div class="section level3">
+<h3 id="conformal-selection">Conformal selection<a class="anchor" aria-label="anchor" href="#conformal-selection"></a>
+</h3>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotter_conformal_selection.html">plotter_conformal_selection</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">pan_affect_genes</span><span class="op">$</span><span class="va">gid</span><span class="op">)</span></span></code></pre></div>
-<p><img src="conformeR-introduction_files/figure-html/unnamed-chunk-8-1.png" alt="" width="100%"></p>
-<p>Finally, we plot conformal clustering on top of LEMUR
-neighborhoods.</p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotter_conformal_selection.html">plotter_conformal_selection</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">pan_affect_genes</span><span class="op">$</span><span class="va">gene</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="conformeR-introduction_files/figure-html/plot-selection-1.png" class="r-plt" alt="Conformal selection overlaid on LEMUR neighborhoods, one panel per gene." width="100%"><p class="caption">
+Conformal selection overlaid on LEMUR neighborhoods, one panel per gene.
+</p>
+</div>
+<p>Cells shaded as part of the selected neighborhood are those the
+procedure can confidently attribute to the condition effect for that
+gene; unshaded cells fall outside the guaranteed selection at the chosen
+coverage level.</p>
+</div>
+<div class="section level3">
+<h3 id="conformal-clustering">Conformal clustering<a class="anchor" aria-label="anchor" href="#conformal-clustering"></a>
+</h3>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotter_conformal_clustering.html">plotter_conformal_clustering</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">pan_affect_genes</span><span class="op">$</span><span class="va">gid</span><span class="op">)</span></span></code></pre></div>
-<p><img src="conformeR-introduction_files/figure-html/unnamed-chunk-9-1.png" alt="" width="100%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotter_conformal_clustering.html">plotter_conformal_clustering</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">pan_affect_genes</span><span class="op">$</span><span class="va">gene</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="conformeR-introduction_files/figure-html/plot-clustering-1.png" class="r-plt" alt="Conformal prediction sets overlaid on LEMUR neighborhoods, one panel per gene." width="100%"><p class="caption">
+Conformal prediction sets overlaid on LEMUR neighborhoods, one panel per
+gene.
+</p>
+</div>
+<p>Here color reflects the prediction set itself rather than a single
+hard assignment, making it easy to spot the boundary regions where
+neighborhood membership is genuinely uncertain versus the core regions
+where every resampling agrees.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
+</h2>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matrix products: default</span></span>
+<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
+<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; locale:</span></span>
+<span><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
+<span><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; time zone: Etc/UTC</span></span>
+<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; attached base packages:</span></span>
+<span><span class="co">#&gt; [1] stats4    stats     graphics  grDevices utils     datasets  methods  </span></span>
+<span><span class="co">#&gt; [8] base     </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; other attached packages:</span></span>
+<span><span class="co">#&gt;  [1] knitr_1.51                  tibble_3.3.1               </span></span>
+<span><span class="co">#&gt;  [3] ggplot2_4.0.3               dplyr_1.2.1                </span></span>
+<span><span class="co">#&gt;  [5] conformeR_0.0.0.9000        SingleCellExperiment_1.32.0</span></span>
+<span><span class="co">#&gt;  [7] SummarizedExperiment_1.40.0 Biobase_2.70.0             </span></span>
+<span><span class="co">#&gt;  [9] GenomicRanges_1.62.1        Seqinfo_1.0.0              </span></span>
+<span><span class="co">#&gt; [11] IRanges_2.44.0              S4Vectors_0.48.1           </span></span>
+<span><span class="co">#&gt; [13] BiocGenerics_0.56.0         generics_0.1.4             </span></span>
+<span><span class="co">#&gt; [15] MatrixGenerics_1.22.0       matrixStats_1.5.0          </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span><span class="co">#&gt;  [1] tidyselect_1.2.1         farver_2.1.2             S7_0.2.2                </span></span>
+<span><span class="co">#&gt;  [4] fastmap_1.2.0            digest_0.6.39            lifecycle_1.0.5         </span></span>
+<span><span class="co">#&gt;  [7] statmod_1.5.2            lemur_1.8.0              magrittr_2.0.5          </span></span>
+<span><span class="co">#&gt; [10] compiler_4.5.2           rlang_1.3.0              sass_0.4.10             </span></span>
+<span><span class="co">#&gt; [13] tools_4.5.2              yaml_2.3.12              labeling_0.4.3          </span></span>
+<span><span class="co">#&gt; [16] S4Arrays_1.10.1          htmlwidgets_1.6.4        DelayedArray_0.36.1     </span></span>
+<span><span class="co">#&gt; [19] RColorBrewer_1.1-3       BiocParallel_1.44.0      abind_1.4-8             </span></span>
+<span><span class="co">#&gt; [22] withr_3.0.3              purrr_1.2.2              desc_1.4.3              </span></span>
+<span><span class="co">#&gt; [25] grid_4.5.2               beachmat_2.26.0          future_1.75.0           </span></span>
+<span><span class="co">#&gt; [28] edgeR_4.8.2              MASS_7.3-65              globals_0.19.1          </span></span>
+<span><span class="co">#&gt; [31] scales_1.4.0             isoband_0.3.0            cli_3.6.6               </span></span>
+<span><span class="co">#&gt; [34] rmarkdown_2.31           ragg_1.5.2               otel_0.2.0              </span></span>
+<span><span class="co">#&gt; [37] rstudioapi_0.19.0        RSpectra_0.16-2          glmGamPoi_1.22.0        </span></span>
+<span><span class="co">#&gt; [40] cachem_1.1.0             splines_4.5.2            parallel_4.5.2          </span></span>
+<span><span class="co">#&gt; [43] XVector_0.50.0           vctrs_0.7.3              Matrix_1.7-4            </span></span>
+<span><span class="co">#&gt; [46] jsonlite_2.0.0           irlba_2.3.7              listenv_1.0.0           </span></span>
+<span><span class="co">#&gt; [49] systemfonts_1.3.2        locfit_1.5-9.12          ggnewscale_0.5.2        </span></span>
+<span><span class="co">#&gt; [52] harmony_1.2.3            limma_3.66.0             jquerylib_0.1.4         </span></span>
+<span><span class="co">#&gt; [55] tidyr_1.3.2              glue_1.8.1               parallelly_1.48.0       </span></span>
+<span><span class="co">#&gt; [58] pkgdown_2.2.0            codetools_0.2-20         cowplot_1.2.0           </span></span>
+<span><span class="co">#&gt; [61] uwot_0.2.4               RcppAnnoy_0.0.23         rsample_1.3.2           </span></span>
+<span><span class="co">#&gt; [64] gtable_0.3.6             pillar_1.11.1            furrr_0.4.0             </span></span>
+<span><span class="co">#&gt; [67] htmltools_0.5.9          R6_2.6.1                 textshaping_1.0.5       </span></span>
+<span><span class="co">#&gt; [70] sparseMatrixStats_1.22.0 evaluate_1.0.5           lattice_0.22-7          </span></span>
+<span><span class="co">#&gt; [73] RhpcBLASctl_0.23-42      bslib_0.11.0             Rcpp_1.1.1-1.1          </span></span>
+<span><span class="co">#&gt; [76] SparseArray_1.10.10      xfun_0.59                fs_2.1.0                </span></span>
+<span><span class="co">#&gt; [79] pkgconfig_2.0.3</span></span></code></pre></div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -313,7 +532,7 @@ neighborhoods.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
       </footer>

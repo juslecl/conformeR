@@ -50,7 +50,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/conformeR-introduction.html">conformeR-introduction</a>
+      <a href="articles/conformeR-introduction.html">Getting Started with conformeR</a>
     </li>
   </ul>
 </li>
@@ -67,7 +67,42 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-conformeR provides conformal prediction layers for the cell neighborhood construction step of the LEMUR framework. It implements two complementary approaches, conformal clustering and conformal selection, to quantify uncertainty in the resulting cell neighborhoods, together with tools for visualizing and interpreting the resulting uncertainty sets.
+<div class="section level1">
+<div class="page-header"><h1 id="conformer">conformeR<a class="anchor" aria-label="anchor" href="#conformer"></a>
+</h1></div>
+<p>Conformal clustering of gene differential expression.</p>
+<p><code>conformeR</code> is a wrapper around the <a href="https://github.com/const-ae/lemur" class="external-link">LEMUR</a> R package that adds uncertainty quantification to LEMUR’s neighborhood on predicted differential expression, using conformal prediction, and without altering the underlying model.</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p><code>conformeR</code> is not yet on CRAN or Bioconductor. Install the development version directly from GitHub.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"juslecl/conformeR"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h2>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">conformeR</span><span class="op">)</span></span></code></pre></div>
+<p>See <code><a href="reference/conformeR.html">?conformeR</a></code> for the main entry point.</p>
+</div>
+<div class="section level2">
+<h2 id="vignette">Vignette<a class="anchor" aria-label="anchor" href="#vignette"></a>
+</h2>
+<p>Open it with:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/browseVignettes.html" class="external-link">browseVignettes</a></span><span class="op">(</span><span class="st">"conformeR"</span><span class="op">)</span></span></code></pre></div>
+<p>or, from the R console:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"conformeR"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="paper">Paper<a class="anchor" aria-label="anchor" href="#paper"></a>
+</h2>
+<p>Stay tuned!</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -107,7 +142,7 @@ conformeR provides conformal prediction layers for the cell neighborhood constru
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
       </footer>
