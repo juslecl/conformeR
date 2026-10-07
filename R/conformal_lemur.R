@@ -76,7 +76,8 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
         ) |>
           dplyr::mutate(
             cell = colnames(pred_test),
-            gene = genes[row]
+            gene = genes[row],
+            conf_quantile=q
           )
       }
     )
