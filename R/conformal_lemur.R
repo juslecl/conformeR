@@ -150,7 +150,8 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
             method = "BH"
           ) < alpha,
           gene = genes[gene]
-        )
+        ) |>
+        dplyr::select(-conformal_p_val)
 
       df
     }) |>
