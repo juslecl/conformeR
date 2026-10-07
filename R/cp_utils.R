@@ -22,7 +22,7 @@
 #' more than 90% of the total variance.}
 #' }
 #'
-#' @export
+#' @noRd
 
 train_classifier <- function(pred_train, nei_train, gene_name){
   idx <- which(nei_train$name==gene_name)
@@ -72,7 +72,7 @@ train_classifier <- function(pred_train, nei_train, gene_name){
 #'     \item{\code{gene}}{The gene name.}
 #'   }
 #'
-#' @export
+#'   @noRd
 
 predict_classifier <- function(trained_classifier, pred_sce, gene_name){
   expr_de <- SummarizedExperiment::assay(pred_sce, "DE")[gene_name, ]

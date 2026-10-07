@@ -29,7 +29,7 @@
 #'   contains the conformal selection results. If both procedures are
 #'   requested, the results are joined by gene and cell.
 #'
-#' @export
+#'   @noRd
 
 conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha) {
   genes <- nei_train$name

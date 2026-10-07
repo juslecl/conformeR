@@ -20,9 +20,8 @@
 #'
 #' @return A list of ggplot components containing the coordinate system,
 #' axis theme, custom axes, and optional label.
-#'
-#' @export
-#'
+#' @noRd
+
 small_axis <- function(label = NULL, fontsize = 7, arrow_length = 10, label_offset = 1, fix_coord = TRUE, remove_axes = TRUE,
                        arrow_spec = grid::arrow(ends = "both", type = "closed", angle = 20, length = ggplot2::unit(arrow_length / 7, units)),
                        units = "mm", ...){
@@ -61,8 +60,8 @@ small_axis <- function(label = NULL, fontsize = 7, arrow_length = 10, label_offs
 #'
 #' @return A numeric value truncated to the specified number of significant
 #' digits.
-#'
-#' @export
+#' @noRd
+
 signif_to_zero <- function(x, digits = 6){
   n_signif_digits <- digits - ceiling(log10(abs(x)))
   sign(x) * floor(abs(x) * 10^n_signif_digits) / 10^n_signif_digits
@@ -87,8 +86,8 @@ signif_to_zero <- function(x, digits = 6){
 #' zero, and maximum values are used.
 #'
 #' @return A ggplot2 continuous colour scale.
-#'
-#' @export
+#' @noRd
+
 scale_color_de_gradient <- function(abs_max, mid_width = 0.1, ..., oob = scales::squish, limits = c(-1, 1) * abs_max, breaks = c(-1, 0, 1) * signif_to_zero(abs_max, 1)){
   colors <- c(scales::muted("blue"), "white", "white", scales::muted("red"))
   values <- c(0, 0.5 - mid_width/2, 0.5 + mid_width/2, 1)

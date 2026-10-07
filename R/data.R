@@ -16,4 +16,5 @@
 #' This object is a subset of the dataset from Zhao et al. (2021),
 #' processed for use as an example dataset in \pkg{conformeR}.
 
+
 "sce_vignette"

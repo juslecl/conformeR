@@ -6,7 +6,7 @@
 #' @param size_cal proportion for calibration set of training set.
 #'
 #' @return list with original sce, proper training, calibration, and test sets
-#' @export
+#' @noRd
 
 data_processing <- function(sce, strat_by,
                             size_train = 0.3, size_cal = 0.25) {
