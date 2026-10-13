@@ -22,6 +22,8 @@
 #'   Can contain \code{"conf_clustering"}, \code{"conf_selection"}, or both.
 #' @param alpha Numeric value specifying the target miscoverage level.
 #'   Also used as the significance level for the Benjamini-Hochberg procedure.
+#' @param return_cq logical specifying whether score quantile for conformal clustering should be returned
+#' (for article simulations only)
 #'
 #' @return A data frame containing the conformal results. If
 #'   \code{what = "conf_clustering"}, the output contains the conformal
@@ -31,7 +33,7 @@
 #'
 #' @export
 
-conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha) {
+conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha, return_cq=FALSE) {
   genes <- nei_train$name
   softies <- lapply(
     genes,
@@ -76,8 +78,10 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
         ) |>
           dplyr::mutate(
             cell = colnames(pred_test),
-            gene = genes[row]
-          )
+            gene = genes[row],
+            conf_quantile = q
+          ) |>
+          dplyr::select(gene,cell,inside_cc,outside_cc,conf_quantile)
       }
     )
 
@@ -150,7 +154,8 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
             method = "BH"
           ) < alpha,
           gene = genes[gene]
-        )
+        ) |>
+        dplyr::select(gene,cell,inside_cs)
 
       df
     }) |>
@@ -158,16 +163,73 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
   }
 
   if (("conf_clustering" %in% what) & ("conf_selection" %in% what)) {
+    if (return_cq)
     return(
       dplyr::left_join(
         label_set,
         pred_set,
         by = c("gene", "cell")
-      )
+      )  |>
+        dplyr::group_by(gene) |>
+        dplyr::summarise(
+          dplyr::across(
+            c(inside_cs, inside_cc, outside_cc),
+            ~ list(cell[.x])
+          ),
+          conf_quantile=mean(conf_quantile)
+        ) |>
+        dplyr::mutate(cp_alpha=alpha)
     )
+
+    else
+      return(
+        dplyr::left_join(
+          label_set,
+          pred_set,
+          by = c("gene", "cell")
+        )  |>
+          dplyr::group_by(gene) |>
+          dplyr::summarise(
+            dplyr::across(
+              c(inside_cs, inside_cc, outside_cc),
+              ~ list(cell[.x])
+            ),
+            conf_quantile=mean(conf_quantile)
+          ) |>
+          dplyr::mutate(cp_alpha=alpha)
+      )
+
   } else if ("conf_clustering" %in% what) {
-    return(pred_set)
+    if (return_cq)
+    return(pred_set |>
+      dplyr::group_by(gene) |>
+      dplyr::summarise(
+        dplyr::across(
+          c(inside_cc, outside_cc),
+          ~ list(cell[.x])
+        ),
+        conf_quantile=mean(conf_quantile)
+      )|>
+      dplyr::mutate(cp_alpha=alpha))
+   else
+    return(pred_set |>
+             dplyr::group_by(gene) |>
+             dplyr::summarise(
+               dplyr::across(
+                 c(inside_cc, outside_cc),
+                 ~ list(cell[.x])
+               )
+             )|>
+             dplyr::mutate(cp_alpha=alpha))
   } else {
-    return(label_set)
+    return(label_set |>
+             dplyr::group_by(gene) |>
+             dplyr::summarise(
+               dplyr::across(
+                 c(inside_cs),
+                 ~ list(cell[.x])
+               )
+             )|>
+             dplyr::mutate(cp_alpha=alpha))
   }
 }

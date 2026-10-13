@@ -30,6 +30,11 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
     dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))
   conf_nei_df <- conformer_output$conf_results |>
     dplyr::filter(gene %in% genes_to_plot) |>
+    dplyr::mutate(
+      inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x)
+    ) |> dplyr::select(gene,inside_cs) |>
+    tidyr::unnest(inside_cs) |>
+    dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))|>
     dplyr::left_join(nei, by=c("cell","gene"="name")) |>
     dplyr::select(gene,neighborhood,cell,inside_cs)
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
@@ -199,6 +204,12 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
     dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))
   conf_nei_df <- conformer_output$conf_results |>
     dplyr::filter(gene %in% genes_to_plot) |>
+    dplyr::mutate(
+      inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
+      outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)
+    ) |> dplyr::select(gene,inside_cc,outside_cc) |>
+    tidyr::unnest(c(inside_cc,outside_cc)) |>
+    dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))|>
     dplyr::left_join(nei, by=c("cell","gene"="name")) |>
     dplyr::select(gene,neighborhood,cell,inside_cc,outside_cc) |>
     dplyr::mutate(set_size = inside_cc + outside_cc)

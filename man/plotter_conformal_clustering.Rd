@@ -16,7 +16,8 @@ containing the LEMUR fit, LEMUR neighborhoods, and conformal results.}
 A single combined \code{ggplot}/\code{cowplot} object: the
 "Inside" panel row stacked above the "Outside" panel row, each row
 labeled accordingly, with one shared "Set size" legend (black = set
-size 1, grey = set size 2) below the combined grid.
+size 1, grey = the other set size observed in the data) below the
+combined grid.
 }
 \description{
 Visualizes gene-level differential expression and conformal clustering

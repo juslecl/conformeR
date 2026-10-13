@@ -11,7 +11,8 @@ conformal_lemur(
   nei_train,
   nei_cal,
   what,
-  alpha
+  alpha,
+  return_cq = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ Can contain \code{"conf_clustering"}, \code{"conf_selection"}, or both.}
 
 \item{alpha}{Numeric value specifying the target miscoverage level.
 Also used as the significance level for the Benjamini-Hochberg procedure.}
+
+\item{return_cq}{logical specifying whether score quantile for conformal clustering should be returned
+(for article simulations only)}
 }
 \value{
 A data frame containing the conformal results. If
