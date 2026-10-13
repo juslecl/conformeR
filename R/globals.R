@@ -1,0 +1,20 @@
+utils::globalVariables(c(
+  "gene",
+  "cell",
+  "inside_cc",
+  "outside_cc",
+  "conf_quantile",
+  "neighborhood",
+  "pred",
+  "conformal_p_val",
+  "inside_cs",
+  "name",
+  "strata",
+  "de",
+  "umap",
+  "set_size",
+  "grp",
+  "x",
+  "y",
+  "inside"
+))

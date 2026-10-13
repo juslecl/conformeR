@@ -97,22 +97,16 @@ e.g. convergence diagnostics, embedding dimensionality — since that
 fit stands in for ground truth throughout.</p>
 </div>
 
-```{r setup}
+```{r setup and theme}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-if (!requireNamespace("conformeR", quietly = TRUE)) {
-  devtools::install_github("https://github.com/juslecl/conformeR")
-}
+
 library(conformeR)
+library(SingleCellExperiment)
 library(dplyr)
 library(ggplot2)
 library(tibble)
 library(knitr)
-```
 
-We use a consistent, minimal theme throughout the vignette so that the
-`conformeR` plots line up visually with the tables:
-
-```{r theme}
 theme_set(
   theme_minimal(base_size = 13) +
     theme(
@@ -147,9 +141,9 @@ behavior, to illustrate a range of neighborhood sizes and
 uncertainty patterns: `HIST3H2A`, `PTPRZ1`, and `HBEGF`.
 
 ```{r genes-of-interest}
-pan_affect_genes <- rowData(sce_vignette) %>%
-  as_tibble() %>%
-  dplyr::select(gid, gene) %>%
+pan_affect_genes <- rowData(sce_vignette) |>
+  as_tibble() |>
+  dplyr::select(gid, gene) |>
   filter(gene %in% c("HIST3H2A", "PTPRZ1", "HBEGF"))
 
 kable(pan_affect_genes, caption = "Genes of interest for this vignette")
@@ -195,7 +189,16 @@ target coverage level. The table below reports both the raw
 neighborhood size and its share of all cells in the fitted embedding.
 
 ```{r selection-summary}
-selection_summary <- res$conf_results |>
+fit <- res$fit_lemur
+cp_out <- res$conf_results |>
+  dplyr::mutate(
+      inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x),
+      inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
+      outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)) |>
+    tidyr::unnest(c(inside_cs, inside_cc,outside_cc)) |>
+    dplyr::mutate(cell=rep(colnames(fit),nrow(fit)))
+    
+selection_summary <- cp_out |>
   group_by(gene) |>
   summarize(
     `Neighborhood size` = sum(inside_cs),
@@ -219,7 +222,7 @@ confidently assign that cell to any neighborhood; larger sets reflect
 more ambiguous cells.
 
 ```{r clustering-summary}
-clustering_summary <- res$conf_results |>
+clustering_summary <- cp_out |>
   group_by(gene) |>
   summarize(
     `Prediction set = inside`  = sum(inside_cc + outside_cc ==1 & inside_cc == 1),

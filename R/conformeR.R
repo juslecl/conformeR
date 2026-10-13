@@ -13,7 +13,7 @@
 #' @param design_lemur A formula specifying the design used by LEMUR.
 #' @param contrast_column A column name specifying the comparison used for
 #' differential-expression testing in LEMUR.
-#' @param constrast_levels when `contrast_column` has more than two levels, specify which two are tested again each other.
+#' @param contrast_levels when `contrast_column` has more than two levels, specify which two are tested again each other.
 #' @param n_embedding Number of dimensions in the LEMUR embedding.
 #' @param use_assay Character string specifying the assay to use.
 #' @param test_fraction_lemur Fraction of cells used as the LEMUR test set.

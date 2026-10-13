@@ -30,6 +30,8 @@ expression data.}
 \item{contrast_column}{A column name specifying the comparison used for
 differential-expression testing in LEMUR.}
 
+\item{contrast_levels}{when \code{contrast_column} has more than two levels, specify which two are tested again each other.}
+
 \item{n_embedding}{Number of dimensions in the LEMUR embedding.}
 
 \item{use_assay}{Character string specifying the assay to use.}
@@ -50,8 +52,6 @@ to include in the conformal analysis.They need to correspond to the row names of
 \item{n_cores}{Number of cores used for parallel processing.}
 
 \item{verbose}{Logical indicating whether to display progress information.}
-
-\item{constrast_levels}{when \code{contrast_column} has more than two levels, specify which two are tested again each other.}
 }
 \value{
 A list containing:

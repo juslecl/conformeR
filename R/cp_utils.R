@@ -34,14 +34,14 @@ train_classifier <- function(pred_train, nei_train, gene_name){
     expr_de = expr_de,
     embedding
   )
-  pca <- prcomp(X, scale. = TRUE)
+  pca <- stats::prcomp(X, scale. = TRUE)
   var_expl <- cumsum(pca$sdev^2) / sum(pca$sdev^2)
   k <- which(var_expl > 0.9)[1]
   dat <- data.frame(
     y = y,
     pca$x[, 1:k]
   )
-  fit <- glm(y ~ ., data = dat, family = "binomial")
+  fit <- stats::glm(y ~ ., data = dat, family = "binomial")
   list(
     fit = fit,
     pca = pca,
@@ -82,7 +82,7 @@ predict_classifier <- function(trained_classifier, pred_sce, gene_name){
     expr_de = expr_de,
     embedding
   )
-  pca_scores <- predict(
+  pca_scores <- stats::predict(
     trained_classifier[[gene_name]]$pca,
     newdata = X_new
   )
@@ -91,7 +91,7 @@ predict_classifier <- function(trained_classifier, pred_sce, gene_name){
     pca_scores[, seq_len(trained_classifier[[gene_name]]$k), drop = FALSE]
   )
 
-  pred <- predict(
+  pred <- stats::predict(
     trained_classifier[[gene_name]]$fit,
     newdata = dat_new,
     type = "response"
@@ -116,16 +116,15 @@ predict_classifier <- function(trained_classifier, pred_sce, gene_name){
     lv <- lv[!is.na(lv)]
     if (length(lv) != 2) {
       stop(sprintf(
-        "Column '%s' has %d levels (%s) — specify contrast_levels = c(level_of_interest, reference_level) explicitly.",
+        "Column '%s' has %d levels (%s) - specify contrast_levels = c(level_of_interest, reference_level) explicitly.",
         column, length(lv), paste(lv, collapse = ", ")
       ))
     }
     levels <- lv
   }
   make_cond_call <- function(lvl) {
-    args <- rlang::list2(!!column := lvl)
+    args <- stats::setNames(list(lvl), column)
     rlang::call2("cond", !!!args)
   }
-  # unevaluated cond(column = levels[1]) - cond(column = levels[2])
   rlang::expr(!!make_cond_call(levels[1]) - !!make_cond_call(levels[2]))
 }

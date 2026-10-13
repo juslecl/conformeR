@@ -11,7 +11,7 @@
 data_processing <- function(sce, strat_by,
                             size_train = 0.3, size_cal = 0.25) {
 
-  stopifnot(is(sce, "SingleCellExperiment"))
+  stopifnot(methods::is(sce, "SingleCellExperiment"))
   colData_df <- as.data.frame(SummarizedExperiment::colData(sce)) |>
     dplyr::mutate(
       row = dplyr::row_number(),

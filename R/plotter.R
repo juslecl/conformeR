@@ -41,28 +41,28 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
 
   # 2. Prepare data for plotting.
-  de_plot_data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
-    dplyr::mutate(umap = umap_fit) %>%
-    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) %>%
-    tidyr::unnest(de, names_sep = "-") %>%
-    tidyr::pivot_longer(starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) %>%
-    dplyr::mutate(gene = factor(gene)) %>%
-    dplyr::left_join(conf_nei_df, by = c("gene", "cell")) %>%
-    dplyr::mutate(inside = ifelse(neighborhood, "in", "out")) %>%
-    dplyr::mutate(inside = factor(inside, levels = c("in", "out")))  %>%
-    dplyr::mutate(inside_cs = ifelse(inside_cs, "in", "out")) %>%
+  de_plot_data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") |>
+    dplyr::mutate(umap = umap_fit) |>
+    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) |>
+    tidyr::unnest(de, names_sep = "-") |>
+    tidyr::pivot_longer(tidyselect::starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) |>
+    dplyr::mutate(gene = factor(gene)) |>
+    dplyr::left_join(conf_nei_df, by = c("gene", "cell")) |>
+    dplyr::mutate(inside = ifelse(neighborhood, "in", "out")) |>
+    dplyr::mutate(inside = factor(inside, levels = c("in", "out")))  |>
+    dplyr::mutate(inside_cs = ifelse(inside_cs, "in", "out")) |>
     dplyr::mutate(inside_cs = factor(inside_cs, levels = c("in", "out")))
 
   # 3. Plot
-  de_plots <- de_plot_data %>%
-    dplyr::group_by(gene) %>%
+  de_plots <- de_plot_data |>
+    dplyr::group_by(gene) |>
     dplyr::group_map(\(data, key){
 
-      abs_max <- max(abs(quantile(data$de, c(0.95, 0.05))))
+      abs_max <- max(abs(stats::quantile(data$de, c(0.95, 0.05))))
       data$gene <- key[[1]][1]
 
-      contour_data <- de_plot_data %>%
-        dplyr::mutate(gene = as.character(gene)) %>%
+      contour_data <- de_plot_data |>
+        dplyr::mutate(gene = as.character(gene)) |>
         dplyr::filter(
           gene == as.character(key[[1]]),
           inside_cs == "in"
@@ -156,6 +156,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
         legend.position = "bottom",
         legend.text = ggplot2::element_text(size = 12),
         legend.title = ggplot2::element_text(size = 12),
+        legend.box.margin = ggplot2::margin(t = -10, r = 0, b = 0, l = 0),
         legend.background = ggplot2::element_rect(
           fill = "white",
           colour = NA
@@ -167,7 +168,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
     de_plots_grid,
     contour_legend,
     ncol = 1,
-    rel_heights = c(1, 0.06)
+    rel_heights = c(1, 0.05)
   )
 }
 
@@ -217,27 +218,50 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
 
   # Set sizes present in the data: black is always 1, grey is whatever else occurs (0 or 2).
-  other_sizes <- setdiff(sort(unique(stats::na.omit(conf_nei_df$set_size))), 1)
+  other_sizes <- setdiff(
+    sort(unique(stats::na.omit(conf_nei_df$set_size))),
+    1
+  )
+
+  if (all(c(0, 2) %in% other_sizes)) {
+    other_sizes <- c(
+      setdiff(other_sizes, c(0, 2)),
+      "0/2"
+    )
+  } else {
+    other_sizes <- as.character(other_sizes)
+  }
+
   set_size_colors <- c(
-    "1" = "black",
-    stats::setNames(rep("grey", length(other_sizes)), as.character(other_sizes))
+    stats::setNames(
+      rep("grey", length(other_sizes)),
+      other_sizes
+    ),
+    "1" = "black"
   )
 
   # 2. Prepare data for plotting (shared by the Inside and Outside rows).
-  de_plot_data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") %>%
-    dplyr::mutate(umap = umap_fit) %>%
-    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) %>%
-    tidyr::unnest(de, names_sep = "-") %>%
-    tidyr::pivot_longer(starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) %>%
-    dplyr::mutate(gene = factor(gene)) %>%
-    dplyr::left_join(conf_nei_df, by = c("gene", "cell"))
+  de_plot_data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small), rownames = "cell") |>
+    dplyr::mutate(umap = umap_fit) |>
+    dplyr::mutate(de = tibble::as_tibble(t(SummarizedExperiment::assay(fit_small, "DE")))) |>
+    tidyr::unnest(de, names_sep = "-") |>
+    tidyr::pivot_longer(tidyselect::starts_with("de-"), names_sep = "-", values_to = "de", names_to = c(NA, "gene")) |>
+    dplyr::mutate(gene = factor(gene)) |>
+    dplyr::left_join(conf_nei_df, by = c("gene", "cell")) |>
+    dplyr::mutate(
+      set_size_label = dplyr::case_when(
+        all(c(0, 2) %in% other_sizes) &
+          set_size %in% c(0, 2) ~ "0/2",
+        TRUE ~ as.character(set_size)
+      )
+    )
 
   # 3. Inside row
-  de_plots_in <- de_plot_data %>%
-    dplyr::group_by(gene) %>%
+  de_plots_in <- de_plot_data |>
+    dplyr::group_by(gene) |>
     dplyr::group_map(\(data, key){
 
-      abs_max <- max(abs(quantile(data$de, c(0.95, 0.05))))
+      abs_max <- max(abs(stats::quantile(data$de, c(0.95, 0.05))))
       data$gene <- key[[1]][1]
 
       ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
@@ -256,8 +280,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
         ggplot2::geom_density_2d( data = data |>
                                     dplyr::filter(set_size != 1 | inside_cc),
                                   ggplot2::aes(
-                                    color = factor(set_size),
-                                    group = factor(set_size)
+                                    color = factor(set_size_label, levels = names(set_size_colors)),
+                                    group = factor(set_size_label, levels = names(set_size_colors))
                                   ),
                                   linewidth = 0.5,
                                   show.legend = FALSE
@@ -296,19 +320,20 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
           plot.background = ggplot2::element_rect(fill = "white", colour = NA),
           strip.background = ggplot2::element_rect(fill = "white", colour = NA),
           panel.grid = ggplot2::element_blank()
-        )}) %>%
-    cowplot::plot_grid(
-      plotlist = .,
-      nrow = 1,
-      rel_widths = rep(1.4, length(.))
-    )
+        )})
+
+  de_plots_in_grid <- cowplot::plot_grid(
+    plotlist = de_plots_in,
+    nrow = 1,
+    rel_widths = rep(1.4, length(de_plots_in))
+  )
 
   # 4. Outside row
-  de_plots_out <- de_plot_data %>%
-    dplyr::group_by(gene) %>%
+  de_plots_out <- de_plot_data |>
+    dplyr::group_by(gene) |>
     dplyr::group_map(\(data, key){
 
-      abs_max <- max(abs(quantile(data$de, c(0.95, 0.05))))
+      abs_max <- max(abs(stats::quantile(data$de, c(0.95, 0.05))))
       data$gene <- key[[1]][1]
 
       ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
@@ -327,8 +352,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
         ggplot2::geom_density_2d( data = data |>
                                     dplyr::filter(set_size != 1 | !inside_cc),
                                   ggplot2::aes(
-                                    color = factor(set_size),
-                                    group = factor(set_size)
+                                    color = factor(set_size_label, levels = names(set_size_colors)),
+                                    group = factor(set_size_label, levels = names(set_size_colors))
                                   ),
                                   linewidth = 0.5,
                                   show.legend = FALSE
@@ -367,12 +392,12 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
           plot.background = ggplot2::element_rect(fill = "white", colour = NA),
           strip.background = ggplot2::element_rect(fill = "white", colour = NA),
           panel.grid = ggplot2::element_blank()
-        )}) %>%
-    cowplot::plot_grid(
-      plotlist = .,
-      nrow = 1,
-      rel_widths = rep(1.4, length(.))
-    )
+        )})
+  de_plots_out_grid <- cowplot::plot_grid(
+    plotlist = de_plots_out,
+    nrow = 1,
+    rel_widths = rep(1.4, length(de_plots_out))
+  )
 
   # Row labels ("Inside" / "Outside") placed to the left of each row.
   label_inside <- cowplot::ggdraw() +
@@ -386,10 +411,10 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
   )
 
   rows <- cowplot::plot_grid(
-    de_plots_in, de_plots_out,
+    de_plots_in_grid,
+    de_plots_out_grid,
     ncol = 1
   )
-
   combined_plot <- cowplot::plot_grid(
     labels_col, rows,
     ncol = 2,

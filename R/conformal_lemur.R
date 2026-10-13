@@ -128,7 +128,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
             (
               (
                 sum(cal_scores < score) +
-                  runif(1) * (1 + sum(cal_scores == score))
+                  stats::runif(1) * (1 + sum(cal_scores == score))
               ) /
                 (ncol(pred_cal) + 1)
             ),
@@ -149,7 +149,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
       df <- conf_pval[[gene]] |>
         as.data.frame() |>
         dplyr::mutate(
-          inside_cs = p.adjust(
+          inside_cs = stats::p.adjust(
             as.numeric(conformal_p_val),
             method = "BH"
           ) < alpha,
