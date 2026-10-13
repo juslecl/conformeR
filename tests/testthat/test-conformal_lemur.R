@@ -17,8 +17,6 @@ build_conformal_inputs <- function(n_genes = 2, seed_offset = 0) {
 }
 
 test_that("conformal_lemur returns joined clustering + selection results", {
-  skip_if_not_installed("tidyr")
-  skip_if_not_installed("purrr")
 
   d <- build_conformal_inputs(n_genes = 2)
 
@@ -30,11 +28,13 @@ test_that("conformal_lemur returns joined clustering + selection results", {
   )
 
   expect_s3_class(out, "data.frame")
-  expect_true(all(c("gene", "cell", "inside_cc", "outside_cc", "inside_cs") %in% names(out)))
-  expect_equal(nrow(out), length(d$gene_names) * ncol(d$pred_test))
+  expect_true(all(c("gene", "inside_cc", "outside_cc", "inside_cs","cp_alpha") %in% names(out)))
+  expect_equal(nrow(out), length(d$gene_names))
   expect_setequal(unique(out$gene), d$gene_names)
-  expect_type(out$inside_cc, "logical")
-  expect_type(out$inside_cs, "logical")
+  expect_type(out$inside_cc, "list")
+  expect_type(out$inside_cs, "list")
+  expect_type(out$outside_cc, "list")
+
 })
 
 test_that("conformal_lemur('conf_clustering') returns only the clustering columns", {
@@ -47,9 +47,9 @@ test_that("conformal_lemur('conf_clustering') returns only the clustering column
     alpha = 0.1
   )
 
-  expect_true(all(c("inside_cc", "outside_cc", "cell", "gene") %in% names(out)))
+  expect_true(all(c("inside_cc", "outside_cc","gene", "cp_alpha") %in% names(out)))
   expect_false("inside_cs" %in% names(out))
-  expect_equal(nrow(out), length(d$gene_names) * ncol(d$pred_test))
+  expect_equal(nrow(out), length(d$gene_names))
 })
 
 test_that("conformal_lemur('conf_selection') returns only the selection columns", {
@@ -64,6 +64,5 @@ test_that("conformal_lemur('conf_selection') returns only the selection columns"
     alpha = 0.1
   )
 
-  expect_true(all(c("conformal_p_val", "cell", "inside_cs", "gene") %in% names(out)))
-  expect_true(all(out$conformal_p_val >= 0 & out$conformal_p_val <= 1))
+  expect_true(all(c( "inside_cs", "gene", "cp_alpha") %in% names(out)))
 })

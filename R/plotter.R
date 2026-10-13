@@ -28,6 +28,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
     ) |> dplyr::select(name,neighborhood) |>
     tidyr::unnest(neighborhood) |>
     dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))
+
   conf_nei_df <- conformer_output$conf_results |>
     dplyr::filter(gene %in% genes_to_plot) |>
     dplyr::mutate(

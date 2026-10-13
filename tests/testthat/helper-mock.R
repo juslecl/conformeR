@@ -109,41 +109,61 @@ make_mock_sce_for_split <- function(n_cells = 120, seed = 42) {
 #'   (containing both the clustering and selection columns).
 make_mock_conformer_output <- function(n_genes = 2, n_cells = 40, seed = 1) {
   set.seed(seed)
+
   gene_names <- paste0("gene", seq_len(n_genes))
   cell_names <- paste0("cell", seq_len(n_cells))
 
   de_mat <- matrix(
     stats::rnorm(n_genes * n_cells),
-    nrow = n_genes, ncol = n_cells,
+    nrow = n_genes,
+    ncol = n_cells,
     dimnames = list(gene_names, cell_names)
   )
+
   fit <- SingleCellExperiment::SingleCellExperiment(
     assays = list(DE = de_mat),
     colData = S4Vectors::DataFrame(row.names = cell_names)
   )
+
   umap_mat <- matrix(
     stats::rnorm(n_cells * 2, sd = 2),
-    nrow = n_cells, ncol = 2,
+    nrow = n_cells,
+    ncol = 2,
     dimnames = list(cell_names, c("UMAP1", "UMAP2"))
   )
+
   SingleCellExperiment::reducedDim(fit, "fit_al_umap") <- umap_mat
 
   neighborhood <- lapply(seq_len(n_genes), function(i) {
     sample(cell_names, size = round(0.5 * n_cells))
   })
-  nei_lemur <- data.frame(name = gene_names, stringsAsFactors = FALSE)
+
+  nei_lemur <- data.frame(
+    name = gene_names,
+    stringsAsFactors = FALSE
+  )
   nei_lemur$neighborhood <- neighborhood
 
-  conf_results <- do.call(rbind, lapply(gene_names, function(g) {
+  conf_results <- lapply(gene_names, function(g) {
+
+    inside_cc <- sample(c(TRUE, FALSE), n_cells, replace = TRUE)
+    outside_cc <- sample(c(TRUE, FALSE), n_cells, replace = TRUE)
+    inside_cs <- sample(c(TRUE, FALSE), n_cells, replace = TRUE)
+
     data.frame(
       gene = g,
-      cell = cell_names,
-      inside_cc = sample(c(TRUE, FALSE), n_cells, replace = TRUE),
-      outside_cc = sample(c(TRUE, FALSE), n_cells, replace = TRUE),
-      inside_cs = sample(c(TRUE, FALSE), n_cells, replace = TRUE),
+      inside_cc = I(list(cell_names[inside_cc])),
+      outside_cc = I(list(cell_names[outside_cc])),
+      inside_cs = I(list(cell_names[inside_cs])),
       stringsAsFactors = FALSE
     )
-  }))
+  }) |>
+    dplyr::bind_rows()
 
-  list(fit_lemur = fit, nei_lemur = nei_lemur, conf_results = conf_results)
+  list(
+    fit_lemur = fit,
+    nei_lemur = nei_lemur,
+    conf_results = conf_results
+  )
 }
+
