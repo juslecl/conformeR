@@ -3,14 +3,15 @@
 # Builds an object that behaves like a SingleCellExperiment but additionally
 # exposes an `$embedding` accessor returning an (n_embedding x n_cells)
 # numeric matrix.
+requireNamespace("SingleCellExperiment", quietly = TRUE)
 
-setClass(
+methods::setClass(
   "MockLemurFit",
   contains = "SingleCellExperiment",
   representation(embedding = "matrix")
 )
 
-setMethod("$", "MockLemurFit", function(x, name) {
+methods::setMethod("$", "MockLemurFit", function(x, name) {
   if (identical(name, "embedding")) return(x@embedding)
   callNextMethod()
 })

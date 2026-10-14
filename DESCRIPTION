@@ -1,11 +1,14 @@
 Package: conformeR
+Type: Package
 Title: Conformalized differential expression analysis of multi-condition single-cell data
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: c(person(given="Justine", family="Leclerc", email="justine.leclerc@usz.ch", role = c("cre", "aut"),
            comment = c(ORCID = "0009-0002-5667-0778")),
-    person("Christof", "Seiler", email="christof.seiler@usz.ch", role="aut",
+    person("Christof", "Seiler", email="christof.seiler@usz.ch", role=c("aut","fnd"),
            comment = c(ORCID = "0000-0001-8802-3642")))
 Description: conformeR provides conformal prediction layers for the cell neighborhood construction step of the LEMUR framework. It implements two complementary approaches, conformal clustering and conformal selection, to quantify uncertainty in the resulting cell neighborhoods, together with tools for visualizing and interpreting the resulting uncertainty sets.
+URL: https://github.com/juslecl/conformeR
+BugReports: https://github.com/juslecl/conformeR/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -41,7 +44,8 @@ Imports:
     methods,
     tidyselect
 Depends: 
-    R (>= 3.5),
-LazyData: true
+    R (>= 4.5.0),
+LazyData: false
 LazyDataCompression: xz
 VignetteBuilder: knitr
+biocViews: Transcriptomics, DifferentialExpression, SingleCell, DimensionReduction, Classification, Clustering, Visualization,GeneExpression, GenePrediction, GeneTarget

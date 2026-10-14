@@ -8,7 +8,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r options, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -98,8 +98,6 @@ fit stands in for ground truth throughout.</p>
 </div>
 
 ```{r setup and theme}
-knitr::opts_chunk$set(warning = FALSE, message = FALSE)
-
 library(conformeR)
 library(SingleCellExperiment)
 library(dplyr)

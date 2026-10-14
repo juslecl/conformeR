@@ -13,6 +13,7 @@ utils::globalVariables(c(
   "de",
   "umap",
   "set_size",
+  "set_size_label",
   "grp",
   "x",
   "y",
