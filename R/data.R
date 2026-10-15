@@ -2,7 +2,7 @@
 #'
 #' A small SingleCellExperiment object used to demonstrate
 #' the conformeR workflow.
-#' 10k cells and 50 genes for 2 patients, 2 conditions, 3 cell-types.
+#' 3k cells and 100 genes for 2 patients, 2 conditions, 3 cell-types.
 #'
 #' @format A \code{SingleCellExperiment} object.
 #'

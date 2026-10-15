@@ -30,8 +30,7 @@
 #'   clustering prediction sets. If \code{what = "conf_selection"}, it
 #'   contains the conformal selection results. If both procedures are
 #'   requested, the results are joined by gene and cell.
-#'
-#' @export
+#' @noRd
 
 conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha, return_cq=FALSE) {
   genes <- nei_train$name

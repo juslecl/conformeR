@@ -19,7 +19,7 @@ sce_reduced
 \description{
 A small SingleCellExperiment object used to demonstrate
 the conformeR workflow.
-10k cells and 50 genes for 2 patients, 2 conditions, 3 cell-types.
+3k cells and 100 genes for 2 patients, 2 conditions, 3 cell-types.
 }
 \details{
 This object is a subset of the dataset from Zhao et al. (2021),
