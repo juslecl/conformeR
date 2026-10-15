@@ -126,10 +126,10 @@ tissue with single-cell RNA-seq,"* published in *Genome Medicine*
 data have already been preprocessed and quality-checked upstream.
 
 ```{r load-data}
-data("sce_vignette")
-sce_vignette
-rownames(sce_vignette) <- rowData(sce_vignette)$gene
-head(colData(sce_vignette))
+data("sce_reduced")
+sce_reduced
+rownames(sce_reduced) <- rowData(sce_reduced)$gene
+head(colData(sce_reduced))
 ```
 
 ## Selecting genes of interest
@@ -139,7 +139,7 @@ behavior, to illustrate a range of neighborhood sizes and
 uncertainty patterns: `HIST3H2A`, `PTPRZ1`, and `HBEGF`.
 
 ```{r genes-of-interest}
-pan_affect_genes <- rowData(sce_vignette) |>
+pan_affect_genes <- rowData(sce_reduced) |>
   as_tibble() |>
   dplyr::select(gid, gene) |>
   filter(gene %in% c("HIST3H2A", "PTPRZ1", "HBEGF"))
@@ -169,7 +169,7 @@ override these proportions).
 ```{r run-conformer}
 set.seed(2002)
 res <- conformeR(
-  sce_vignette,
+  sce_reduced,
   design_lemur = ~ patient_id + condition,
   contrast_column = "condition",
   genes_of_interest = pan_affect_genes$gene,

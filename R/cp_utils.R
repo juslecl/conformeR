@@ -39,7 +39,7 @@ train_classifier <- function(pred_train, nei_train, gene_name){
   k <- which(var_expl > 0.9)[1]
   dat <- data.frame(
     y = y,
-    pca$x[, 1:k]
+    pca$x[, seq_len(k)]
   )
   fit <- stats::glm(y ~ ., data = dat, family = "binomial")
   list(

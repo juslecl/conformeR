@@ -2,7 +2,7 @@
 #'
 #' A small SingleCellExperiment object used to demonstrate
 #' the conformeR workflow.
-#' 10k cells and 3k genes for 2 patients, 2 conditions, 3 cell-types.
+#' 10k cells and 50 genes for 2 patients, 2 conditions, 3 cell-types.
 #'
 #' @format A \code{SingleCellExperiment} object.
 #'
@@ -16,4 +16,4 @@
 #' This object is a subset of the dataset from Zhao et al. (2021),
 #' processed for use as an example dataset in \pkg{conformeR}.
 
-"sce_vignette"
+"sce_reduced"

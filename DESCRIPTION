@@ -45,7 +45,6 @@ Imports:
     tidyselect
 Depends: 
     R (>= 4.5.0),
-LazyData: false
-LazyDataCompression: xz
 VignetteBuilder: knitr
+LazyData: false
 biocViews: Transcriptomics, DifferentialExpression, SingleCell, DimensionReduction, Classification, Clustering, Visualization,GeneExpression, GenePrediction, GeneTarget
