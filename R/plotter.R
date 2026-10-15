@@ -17,27 +17,29 @@
 #'
 #' @export
 
-plotter_conformal_selection <- function(conformer_output, genes_to_plot){
+plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
   # 1. Prepare the results from main conformeR function.
   fit <- conformer_output$fit_lemur
-  fit_small <- fit[genes_to_plot,]
+  fit_small <- fit[genes_to_plot, ]
   nei <- conformer_output$nei_lemur |>
     dplyr::filter(name %in% genes_to_plot) |>
     dplyr::mutate(
       neighborhood = purrr::map(neighborhood, ~ colnames(fit) %in% .x)
-    ) |> dplyr::select(name,neighborhood) |>
+    ) |>
+    dplyr::select(name, neighborhood) |>
     tidyr::unnest(neighborhood) |>
-    dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))
+    dplyr::mutate(cell = rep(colnames(fit), length(genes_to_plot)))
 
   conf_nei_df <- conformer_output$conf_results |>
     dplyr::filter(gene %in% genes_to_plot) |>
     dplyr::mutate(
       inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x)
-    ) |> dplyr::select(gene,inside_cs) |>
+    ) |>
+    dplyr::select(gene, inside_cs) |>
     tidyr::unnest(inside_cs) |>
-    dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))|>
-    dplyr::left_join(nei, by=c("cell","gene"="name")) |>
-    dplyr::select(gene,neighborhood,cell,inside_cs)
+    dplyr::mutate(cell = rep(colnames(fit), length(genes_to_plot))) |>
+    dplyr::left_join(nei, by = c("cell", "gene" = "name")) |>
+    dplyr::select(gene, neighborhood, cell, inside_cs)
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
 
   # 2. Prepare data for plotting.
@@ -49,7 +51,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
     dplyr::mutate(gene = factor(gene)) |>
     dplyr::left_join(conf_nei_df, by = c("gene", "cell")) |>
     dplyr::mutate(inside = ifelse(neighborhood, "in", "out")) |>
-    dplyr::mutate(inside = factor(inside, levels = c("in", "out")))  |>
+    dplyr::mutate(inside = factor(inside, levels = c("in", "out"))) |>
     dplyr::mutate(inside_cs = ifelse(inside_cs, "in", "out")) |>
     dplyr::mutate(inside_cs = factor(inside_cs, levels = c("in", "out")))
 
@@ -57,7 +59,6 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
   de_plots <- de_plot_data |>
     dplyr::group_by(gene) |>
     dplyr::group_map(\(data, key){
-
       abs_max <- max(abs(stats::quantile(data$de, c(0.95, 0.05))))
       data$gene <- key[[1]][1]
 
@@ -68,7 +69,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
           inside_cs == "in"
         )
 
-      p <- ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
+      p <- ggplot2::ggplot(data, ggplot2::aes(x = umap[, 1], y = umap[, 2])) +
         ggplot2::geom_point(
           data = dplyr::filter(data, neighborhood),
           ggplot2::aes(
@@ -86,12 +87,12 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
             gene = ggplot2::as_labeller(\(x) paste0(x))
           )
         ) +
-        ggplot2::scale_x_continuous(limits = range(umap_fit[,1]) * 1.1) +
-        ggplot2::scale_y_continuous(limits = range(umap_fit[,2]) * 1.1) +
+        ggplot2::scale_x_continuous(limits = range(umap_fit[, 1]) * 1.1) +
+        ggplot2::scale_y_continuous(limits = range(umap_fit[, 2]) * 1.1) +
         small_axis(
           fontsize = 18,
-          xlim = range(umap_fit[,1]),
-          ylim = range(umap_fit[,2]),
+          xlim = range(umap_fit[, 1]),
+          ylim = range(umap_fit[, 2]),
           arrow_length = 6
         ) +
         ggplot2::theme(
@@ -112,8 +113,8 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
 
       if (
         nrow(contour_data) >= 3 &&
-        dplyr::n_distinct(contour_data$umap[,1]) > 1 &&
-        dplyr::n_distinct(contour_data$umap[,2]) > 1
+          dplyr::n_distinct(contour_data$umap[, 1]) > 1 &&
+          dplyr::n_distinct(contour_data$umap[, 2]) > 1
       ) {
         p <- p +
           ggplot2::geom_density_2d(
@@ -133,7 +134,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
 
   de_plots_grid <- cowplot::plot_grid(
     plotlist = de_plots,
-    nrow = ceiling(length(genes_to_plot)/4),
+    nrow = ceiling(length(genes_to_plot) / 4),
     rel_widths = rep(1.4, length(de_plots))
   )
 
@@ -193,27 +194,29 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot){
 #' combined grid.
 #'
 #' @export
-plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
+plotter_conformal_clustering <- function(conformer_output, genes_to_plot) {
   # 1. Prepare the results from main conformeR function.
   fit <- conformer_output$fit_lemur
-  fit_small <- fit[genes_to_plot,]
+  fit_small <- fit[genes_to_plot, ]
   nei <- conformer_output$nei_lemur |>
     dplyr::filter(name %in% genes_to_plot) |>
     dplyr::mutate(
       neighborhood = purrr::map(neighborhood, ~ colnames(fit) %in% .x)
-    ) |> dplyr::select(name,neighborhood) |>
+    ) |>
+    dplyr::select(name, neighborhood) |>
     tidyr::unnest(neighborhood) |>
-    dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))
+    dplyr::mutate(cell = rep(colnames(fit), length(genes_to_plot)))
   conf_nei_df <- conformer_output$conf_results |>
     dplyr::filter(gene %in% genes_to_plot) |>
     dplyr::mutate(
       inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
       outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)
-    ) |> dplyr::select(gene,inside_cc,outside_cc) |>
-    tidyr::unnest(c(inside_cc,outside_cc)) |>
-    dplyr::mutate(cell=rep(colnames(fit),length(genes_to_plot)))|>
-    dplyr::left_join(nei, by=c("cell","gene"="name")) |>
-    dplyr::select(gene,neighborhood,cell,inside_cc,outside_cc) |>
+    ) |>
+    dplyr::select(gene, inside_cc, outside_cc) |>
+    tidyr::unnest(c(inside_cc, outside_cc)) |>
+    dplyr::mutate(cell = rep(colnames(fit), length(genes_to_plot))) |>
+    dplyr::left_join(nei, by = c("cell", "gene" = "name")) |>
+    dplyr::select(gene, neighborhood, cell, inside_cc, outside_cc) |>
     dplyr::mutate(set_size = inside_cc + outside_cc)
   umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |> as.data.frame()
 
@@ -260,52 +263,47 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
   de_plots_in <- de_plot_data |>
     dplyr::group_by(gene) |>
     dplyr::group_map(\(data, key){
-
       abs_max <- max(abs(stats::quantile(data$de, c(0.95, 0.05))))
       data$gene <- key[[1]][1]
 
-      ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
-        ggplot2::geom_point( data = data |> dplyr::filter(neighborhood),
-                             ggplot2::aes(
-                               color = de,
-                               alpha = pmin(abs(de) / (0.3 * abs_max), 1)
-                             ),
-                             size = 0.5
+      ggplot2::ggplot(data, ggplot2::aes(x = umap[, 1], y = umap[, 2])) +
+        ggplot2::geom_point(
+          data = data |> dplyr::filter(neighborhood),
+          ggplot2::aes(
+            color = de,
+            alpha = pmin(abs(de) / (0.3 * abs_max), 1)
+          ),
+          size = 0.5
         ) +
         ggplot2::scale_alpha_identity() +
         scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
-
         ggnewscale::new_scale_color() +
-
-        ggplot2::geom_density_2d( data = data |>
-                                    dplyr::filter(set_size != 1 | inside_cc),
-                                  ggplot2::aes(
-                                    color = factor(set_size_label, levels = names(set_size_colors)),
-                                    group = factor(set_size_label, levels = names(set_size_colors))
-                                  ),
-                                  linewidth = 0.5,
-                                  show.legend = FALSE
+        ggplot2::geom_density_2d(
+          data = data |>
+            dplyr::filter(set_size != 1 | inside_cc),
+          ggplot2::aes(
+            color = factor(set_size_label, levels = names(set_size_colors)),
+            group = factor(set_size_label, levels = names(set_size_colors))
+          ),
+          linewidth = 0.5,
+          show.legend = FALSE
         ) +
         ggplot2::scale_color_manual(
           values = set_size_colors,
           name = "Set size",
           guide = "none"
         ) +
-
         ggplot2::facet_grid(
           cols = ggplot2::vars(gene)
         ) +
-
-        ggplot2::scale_x_continuous(limits = range(umap_fit[,1]) * 1.1) +
-        ggplot2::scale_y_continuous(limits = range(umap_fit[,2]) * 1.1) +
-
+        ggplot2::scale_x_continuous(limits = range(umap_fit[, 1]) * 1.1) +
+        ggplot2::scale_y_continuous(limits = range(umap_fit[, 2]) * 1.1) +
         small_axis(
           fontsize = 18,
-          xlim = range(umap_fit[,1]),
-          ylim = range(umap_fit[,2]),
+          xlim = range(umap_fit[, 1]),
+          ylim = range(umap_fit[, 2]),
           arrow_length = 6
         ) +
-
         ggplot2::theme(
           strip.text.x = ggplot2::element_text(size = 12),
           strip.text.y = ggplot2::element_blank(),
@@ -320,7 +318,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
           plot.background = ggplot2::element_rect(fill = "white", colour = NA),
           strip.background = ggplot2::element_rect(fill = "white", colour = NA),
           panel.grid = ggplot2::element_blank()
-        )})
+        )
+    })
 
   de_plots_in_grid <- cowplot::plot_grid(
     plotlist = de_plots_in,
@@ -332,52 +331,47 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
   de_plots_out <- de_plot_data |>
     dplyr::group_by(gene) |>
     dplyr::group_map(\(data, key){
-
       abs_max <- max(abs(stats::quantile(data$de, c(0.95, 0.05))))
       data$gene <- key[[1]][1]
 
-      ggplot2::ggplot(data, ggplot2::aes(x = umap[,1], y = umap[,2])) +
-        ggplot2::geom_point( data = data |> dplyr::filter(!neighborhood),
-                             ggplot2::aes(
-                               color = de,
-                               alpha = pmin(abs(de) / (0.3 * abs_max), 1)
-                             ),
-                             size = 0.5
+      ggplot2::ggplot(data, ggplot2::aes(x = umap[, 1], y = umap[, 2])) +
+        ggplot2::geom_point(
+          data = data |> dplyr::filter(!neighborhood),
+          ggplot2::aes(
+            color = de,
+            alpha = pmin(abs(de) / (0.3 * abs_max), 1)
+          ),
+          size = 0.5
         ) +
         ggplot2::scale_alpha_identity() +
         scale_color_de_gradient(abs_max, mid_width = 0.2, name = "") +
-
         ggnewscale::new_scale_color() +
-
-        ggplot2::geom_density_2d( data = data |>
-                                    dplyr::filter(set_size != 1 | !inside_cc),
-                                  ggplot2::aes(
-                                    color = factor(set_size_label, levels = names(set_size_colors)),
-                                    group = factor(set_size_label, levels = names(set_size_colors))
-                                  ),
-                                  linewidth = 0.5,
-                                  show.legend = FALSE
+        ggplot2::geom_density_2d(
+          data = data |>
+            dplyr::filter(set_size != 1 | !inside_cc),
+          ggplot2::aes(
+            color = factor(set_size_label, levels = names(set_size_colors)),
+            group = factor(set_size_label, levels = names(set_size_colors))
+          ),
+          linewidth = 0.5,
+          show.legend = FALSE
         ) +
         ggplot2::scale_color_manual(
           values = set_size_colors,
           name = "Set size",
           guide = "none"
         ) +
-
         ggplot2::facet_grid(
           cols = ggplot2::vars(gene)
         ) +
-
-        ggplot2::scale_x_continuous(limits = range(umap_fit[,1]) * 1.1) +
-        ggplot2::scale_y_continuous(limits = range(umap_fit[,2]) * 1.1) +
-
+        ggplot2::scale_x_continuous(limits = range(umap_fit[, 1]) * 1.1) +
+        ggplot2::scale_y_continuous(limits = range(umap_fit[, 2]) * 1.1) +
         small_axis(
           fontsize = 18,
-          xlim = range(umap_fit[,1]),
-          ylim = range(umap_fit[,2]),
+          xlim = range(umap_fit[, 1]),
+          ylim = range(umap_fit[, 2]),
           arrow_length = 6
         ) +
-
         ggplot2::theme(
           strip.text.x = ggplot2::element_text(size = 12),
           strip.text.y = ggplot2::element_blank(),
@@ -392,7 +386,8 @@ plotter_conformal_clustering <- function(conformer_output, genes_to_plot){
           plot.background = ggplot2::element_rect(fill = "white", colour = NA),
           strip.background = ggplot2::element_rect(fill = "white", colour = NA),
           panel.grid = ggplot2::element_blank()
-        )})
+        )
+    })
   de_plots_out_grid <- cowplot::plot_grid(
     plotlist = de_plots_out,
     nrow = 1,

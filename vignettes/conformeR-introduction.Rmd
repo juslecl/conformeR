@@ -190,12 +190,13 @@ neighborhood size and its share of all cells in the fitted embedding.
 fit <- res$fit_lemur
 cp_out <- res$conf_results |>
   dplyr::mutate(
-      inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x),
-      inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
-      outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)) |>
-    tidyr::unnest(c(inside_cs, inside_cc,outside_cc)) |>
-    dplyr::mutate(cell=rep(colnames(fit),nrow(fit)))
-    
+    inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x),
+    inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
+    outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)
+  ) |>
+  tidyr::unnest(c(inside_cs, inside_cc, outside_cc)) |>
+  dplyr::mutate(cell = rep(colnames(fit), nrow(fit)))
+
 selection_summary <- cp_out |>
   group_by(gene) |>
   summarize(
@@ -223,9 +224,9 @@ more ambiguous cells.
 clustering_summary <- cp_out |>
   group_by(gene) |>
   summarize(
-    `Prediction set = inside`  = sum(inside_cc + outside_cc ==1 & inside_cc == 1),
-    `Prediction set = outside` = sum(inside_cc + outside_cc ==1 & outside_cc == 1),
-    `Prediction set size 2`    = sum(inside_cc + outside_cc !=1),
+    `Prediction set = inside` = sum(inside_cc + outside_cc == 1 & inside_cc == 1),
+    `Prediction set = outside` = sum(inside_cc + outside_cc == 1 & outside_cc == 1),
+    `Prediction set size 2` = sum(inside_cc + outside_cc != 1),
     .groups = "drop"
   )
 

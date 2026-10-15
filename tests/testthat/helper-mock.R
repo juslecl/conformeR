@@ -12,7 +12,9 @@ methods::setClass(
 )
 
 methods::setMethod("$", "MockLemurFit", function(x, name) {
-  if (identical(name, "embedding")) return(x@embedding)
+  if (identical(name, "embedding")) {
+    return(x@embedding)
+  }
   callNextMethod()
 })
 
@@ -146,7 +148,6 @@ make_mock_conformer_output <- function(n_genes = 2, n_cells = 40, seed = 1) {
   nei_lemur$neighborhood <- neighborhood
 
   conf_results <- lapply(gene_names, function(g) {
-
     inside_cc <- sample(c(TRUE, FALSE), n_cells, replace = TRUE)
     outside_cc <- sample(c(TRUE, FALSE), n_cells, replace = TRUE)
     inside_cs <- sample(c(TRUE, FALSE), n_cells, replace = TRUE)
@@ -167,4 +168,3 @@ make_mock_conformer_output <- function(n_genes = 2, n_cells = 40, seed = 1) {
     conf_results = conf_results
   )
 }
-

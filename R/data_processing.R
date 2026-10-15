@@ -1,4 +1,4 @@
-#'Splitting of the original dataset using `initial_split` and balancing on covariates passed to `lemur`.
+#' Splitting of the original dataset using `initial_split` and balancing on covariates passed to `lemur`.
 #'
 #' @param sce SingleCellExperiment with replicate_id, obs_condition, cell_type in colData
 #' @param strat_by vector of column names in colData(sce) on which we stratify.
@@ -9,7 +9,6 @@
 #' @noRd
 data_processing <- function(sce, strat_by,
                             size_train = 0.3, size_cal = 0.25) {
-
   stopifnot(methods::is(sce, "SingleCellExperiment"))
   colData_df <- as.data.frame(SummarizedExperiment::colData(sce)) |>
     dplyr::mutate(
@@ -31,11 +30,6 @@ data_processing <- function(sce, strat_by,
   return(list(
     train = train_set,
     cal = cal_set,
-    test = test_set))
+    test = test_set
+  ))
 }
-
-
-
-
-
-

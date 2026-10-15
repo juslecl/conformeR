@@ -54,8 +54,8 @@ test_that("data_processing keeps multi-column strata roughly balanced across spl
   strat_cols <- c("obs_condition", "cell_type")
   overall <- strata_proportions(sce, strat_cols)
   train_p <- strata_proportions(split$train, strat_cols)
-  cal_p   <- strata_proportions(split$cal, strat_cols)
-  test_p  <- strata_proportions(split$test, strat_cols)
+  cal_p <- strata_proportions(split$cal, strat_cols)
+  test_p <- strata_proportions(split$test, strat_cols)
 
   expect_setequal(names(train_p), names(overall))
   expect_setequal(names(cal_p), names(overall))

@@ -32,7 +32,7 @@
 #'   requested, the results are joined by gene and cell.
 #' @noRd
 
-conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha, return_cq=FALSE) {
+conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha, return_cq = FALSE) {
   genes <- nei_train$name
   softies <- lapply(
     genes,
@@ -62,7 +62,6 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     pred_set_list <- lapply(
       seq_along(genes),
       function(row) {
-
         p_cal <- pred_proba[[row]]$pred
 
         s_cal <- 1 - pmax(p_cal, 1 - p_cal)
@@ -80,7 +79,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
             gene = genes[row],
             conf_quantile = q
           ) |>
-          dplyr::select(gene,cell,inside_cc,outside_cc,conf_quantile)
+          dplyr::select(gene, cell, inside_cc, outside_cc, conf_quantile)
       }
     )
 
@@ -104,7 +103,6 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     scores_test <- lapply(
       seq_along(genes),
       function(row) {
-
         cbind.data.frame(
           scores_test = -pred_proba_test[[row]]$pred,
           gene = genes[row],
@@ -123,14 +121,15 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
 
         p <- vapply(
           scores_test[[gene]][, 1],
-          function(score)
+          function(score) {
             (
               (
                 sum(cal_scores < score) +
                   stats::runif(1) * (1 + sum(cal_scores == score))
               ) /
                 (ncol(pred_cal) + 1)
-            ),
+            )
+          },
           numeric(1)
         )
 
@@ -144,7 +143,6 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
     scores_test <- do.call(rbind.data.frame, scores_test)
 
     label_set <- lapply(seq_along(conf_pval), function(gene) {
-
       df <- conf_pval[[gene]] |>
         as.data.frame() |>
         dplyr::mutate(
@@ -154,7 +152,7 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
           ) < alpha,
           gene = genes[gene]
         ) |>
-        dplyr::select(gene,cell,inside_cs)
+        dplyr::select(gene, cell, inside_cs)
 
       df
     }) |>
@@ -162,73 +160,73 @@ conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal,
   }
 
   if (("conf_clustering" %in% what) & ("conf_selection" %in% what)) {
-    if (return_cq)
-    return(
-      dplyr::left_join(
-        label_set,
-        pred_set,
-        by = c("gene", "cell")
-      )  |>
-        dplyr::group_by(gene) |>
-        dplyr::summarise(
-          dplyr::across(
-            c(inside_cs, inside_cc, outside_cc),
-            ~ list(cell[.x])
-          ),
-          conf_quantile=mean(conf_quantile)
-        ) |>
-        dplyr::mutate(cp_alpha=alpha)
-    )
-
-    else
+    if (return_cq) {
       return(
         dplyr::left_join(
           label_set,
           pred_set,
           by = c("gene", "cell")
-        )  |>
+        ) |>
           dplyr::group_by(gene) |>
           dplyr::summarise(
             dplyr::across(
               c(inside_cs, inside_cc, outside_cc),
               ~ list(cell[.x])
             ),
-            conf_quantile=mean(conf_quantile)
+            conf_quantile = mean(conf_quantile)
           ) |>
-          dplyr::mutate(cp_alpha=alpha)
+          dplyr::mutate(cp_alpha = alpha)
       )
-
+    } else {
+      return(
+        dplyr::left_join(
+          label_set,
+          pred_set,
+          by = c("gene", "cell")
+        ) |>
+          dplyr::group_by(gene) |>
+          dplyr::summarise(
+            dplyr::across(
+              c(inside_cs, inside_cc, outside_cc),
+              ~ list(cell[.x])
+            ),
+            conf_quantile = mean(conf_quantile)
+          ) |>
+          dplyr::mutate(cp_alpha = alpha)
+      )
+    }
   } else if ("conf_clustering" %in% what) {
-    if (return_cq)
-    return(pred_set |>
+    if (return_cq) {
+      return(pred_set |>
+        dplyr::group_by(gene) |>
+        dplyr::summarise(
+          dplyr::across(
+            c(inside_cc, outside_cc),
+            ~ list(cell[.x])
+          ),
+          conf_quantile = mean(conf_quantile)
+        ) |>
+        dplyr::mutate(cp_alpha = alpha))
+    } else {
+      return(pred_set |>
+        dplyr::group_by(gene) |>
+        dplyr::summarise(
+          dplyr::across(
+            c(inside_cc, outside_cc),
+            ~ list(cell[.x])
+          )
+        ) |>
+        dplyr::mutate(cp_alpha = alpha))
+    }
+  } else {
+    return(label_set |>
       dplyr::group_by(gene) |>
       dplyr::summarise(
         dplyr::across(
-          c(inside_cc, outside_cc),
+          c(inside_cs),
           ~ list(cell[.x])
-        ),
-        conf_quantile=mean(conf_quantile)
-      )|>
-      dplyr::mutate(cp_alpha=alpha))
-   else
-    return(pred_set |>
-             dplyr::group_by(gene) |>
-             dplyr::summarise(
-               dplyr::across(
-                 c(inside_cc, outside_cc),
-                 ~ list(cell[.x])
-               )
-             )|>
-             dplyr::mutate(cp_alpha=alpha))
-  } else {
-    return(label_set |>
-             dplyr::group_by(gene) |>
-             dplyr::summarise(
-               dplyr::across(
-                 c(inside_cs),
-                 ~ list(cell[.x])
-               )
-             )|>
-             dplyr::mutate(cp_alpha=alpha))
+        )
+      ) |>
+      dplyr::mutate(cp_alpha = alpha))
   }
 }

@@ -39,21 +39,21 @@
 #' @export
 
 conformeR <- function(sce,
-                      design_lemur = ~ 1,
+                      design_lemur = ~1,
                       contrast_column,
-                      contrast_levels=NULL,
+                      contrast_levels = NULL,
                       n_embedding = 60,
                       use_assay = "logcounts",
                       test_fraction_lemur = 0.2,
-                      cp_train_frac=0.5,
-                      cp_cal_frac=0.25,
-                      cp_alpha=0.05,
+                      cp_train_frac = 0.5,
+                      cp_cal_frac = 0.25,
+                      cp_alpha = 0.05,
                       genes_of_interest,
-                      what=c("conf_selection","conf_clustering"),
-                      n_cores=1,
-                      verbose = TRUE){
+                      what = c("conf_selection", "conf_clustering"),
+                      n_cores = 1,
+                      verbose = TRUE) {
   # 1. Run the standard lemur procedure.
-  fit <- lemur::lemur(sce, design = design_lemur, n_embedding = n_embedding, test_fraction = test_fraction_lemur,use_assay=use_assay)
+  fit <- lemur::lemur(sce, design = design_lemur, n_embedding = n_embedding, test_fraction = test_fraction_lemur, use_assay = use_assay)
   SingleCellExperiment::reducedDim(fit, "fit_umap") <- uwot::umap(t(fit$embedding))
   fit <- lemur::align_harmony(fit)
   SingleCellExperiment::reducedDim(fit, "fit_al_umap") <- uwot::umap(t(fit$embedding))
@@ -62,7 +62,7 @@ conformeR <- function(sce,
   covariates <- all.vars(design_lemur)
 
   # 2. Split data
-  split <- data_processing(fit,strat_by=covariates,size_train =cp_train_frac, size_cal = cp_cal_frac)
+  split <- data_processing(fit, strat_by = covariates, size_train = cp_train_frac, size_cal = cp_cal_frac)
   pred_train <- split$train
   pred_cal <- split$cal
   pred_test <- split$test
@@ -94,18 +94,19 @@ conformeR <- function(sce,
   chunk_results <- BiocParallel::bplapply(
     seq_along(gene_chunks),
     function(i) {
-
       chunk_genes <- gene_chunks[[i]]
 
       pred_train_chunk <- pred_train[chunk_genes, ]
-      pred_cal_chunk   <- pred_cal[chunk_genes, ]
-      pred_test_chunk  <- pred_test[chunk_genes, ]
+      pred_cal_chunk <- pred_cal[chunk_genes, ]
+      pred_test_chunk <- pred_test[chunk_genes, ]
 
-      nei_train_chunk <- nei_train |> dplyr::filter(name %in% chunk_genes) |>
+      nei_train_chunk <- nei_train |>
+        dplyr::filter(name %in% chunk_genes) |>
         dplyr::mutate(
           neighborhood = purrr::map(neighborhood, ~ colnames(pred_train) %in% .x)
         )
-      nei_cal_chunk <- nei_cal |> dplyr::filter(name %in% chunk_genes) |>
+      nei_cal_chunk <- nei_cal |>
+        dplyr::filter(name %in% chunk_genes) |>
         dplyr::mutate(
           neighborhood = purrr::map(neighborhood, ~ colnames(pred_cal) %in% .x)
         )
@@ -130,8 +131,5 @@ conformeR <- function(sce,
 
   # 6. Collect the results
   pred_set_all <- dplyr::bind_rows(chunk_results)
-  return(list(fit_lemur=pred_test[genes_of_interest,], nei_lemur=nei_test |> dplyr::filter(name %in% genes_of_interest), conf_results=pred_set_all))
+  return(list(fit_lemur = pred_test[genes_of_interest, ], nei_lemur = nei_test |> dplyr::filter(name %in% genes_of_interest), conf_results = pred_set_all))
 }
-
-
-

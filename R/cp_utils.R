@@ -23,8 +23,8 @@
 #' }
 #' @noRd
 
-train_classifier <- function(pred_train, nei_train, gene_name){
-  idx <- which(nei_train$name==gene_name)
+train_classifier <- function(pred_train, nei_train, gene_name) {
+  idx <- which(nei_train$name == gene_name)
   y <- as.factor(as.numeric(nei_train$neighborhood[[idx]]))
   expr_de <- SummarizedExperiment::assay(pred_train, "DE")[gene_name, ]
   embedding <- t(pred_train$embedding)
@@ -72,7 +72,7 @@ train_classifier <- function(pred_train, nei_train, gene_name){
 #'   }
 #' @noRd
 
-predict_classifier <- function(trained_classifier, pred_sce, gene_name){
+predict_classifier <- function(trained_classifier, pred_sce, gene_name) {
   expr_de <- SummarizedExperiment::assay(pred_sce, "DE")[gene_name, ]
   embedding <- t(pred_sce$embedding)
   colnames(embedding) <- paste0("dim", seq_len(ncol(embedding)))
