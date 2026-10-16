@@ -10,27 +10,27 @@ vignette: >
 
 ```{r options, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  dev = "png",
-  fig.width = 12,
-  fig.height = 7,
-  out.width = "100%",
-  warning = FALSE,
-  message = FALSE
+    collapse = TRUE,
+    comment = "#>",
+    dev = "png",
+    fig.width = 12,
+    fig.height = 7,
+    out.width = "100%",
+    warning = FALSE,
+    message = FALSE
 )
 ```
 
 ```{css, echo = FALSE}
 .callout {
-  border-left: 4px solid #4472A8;
-  background-color: #F2F6FA;
-  padding: 0.6em 1em;
-  margin: 1em 0;
-  border-radius: 2px;
+border-left: 4px solid #4472A8;
+background-color: #F2F6FA;
+padding: 0.6em 1em;
+margin: 1em 0;
+border-radius: 2px;
 }
 .callout p {
-  margin: 0.3em 0;
+margin: 0.3em 0;
 }
 ```
 
@@ -48,13 +48,13 @@ variability can be quantified rather than ignored.
 It provides two complementary views of that uncertainty:
 
 - **Conformal selection** asks, for a given gene, *which cells can we
-  confidently say belong to the affected neighborhood?* It returns a
-  data-driven subset of cells with a guaranteed bound on the
-  proportion of false inclusions.
+confidently say belong to the affected neighborhood?* It returns a
+data-driven subset of cells with a guaranteed bound on the
+proportion of false inclusions.
 - **Conformal clustering** asks the finer-grained question, *for each
-  cell, how uncertain are we about its neighborhood assignment?* It
-  returns a prediction *set* of plausible neighborhoods per cell,
-  which can contain zero, one, or several labels.
+cell, how uncertain are we about its neighborhood assignment?* It
+returns a prediction *set* of plausible neighborhoods per cell,
+which can contain zero, one, or several labels.
 
 <div class="callout">
 <p>**Why this matters.** A single LEMUR fit gives you one particular
@@ -77,17 +77,17 @@ proxy label for both training and calibration. That proxy is a
 degrade differently under that noise:
 
 - **Conformal clustering** stays conservative. Calibrating against a
-  noisy label inflates the non-conformity scores, so the procedure
-  compensates by returning more prediction sets of size 2 — i.e. it
-  more often declines to commit to a neighborhood — rather than
-  silently under-covering. The formal guarantee effectively still
-  holds, at the cost of more "I don't know" answers.
+noisy label inflates the non-conformity scores, so the procedure
+compensates by returning more prediction sets of size 2 — i.e. it
+more often declines to commit to a neighborhood — rather than
+silently under-covering. The formal guarantee effectively still
+holds, at the cost of more "I don't know" answers.
 - **Conformal selection** has no such built-in safety valve. Its
-  validity relies directly on LEMUR's predicted neighborhoods not
-  being *too* wrong: if LEMUR's assignment is systematically biased
-  rather than just noisy, the selected neighborhood inherits that
-  bias. In practice this means conformal selection results are only
-  as trustworthy as the underlying LEMUR fit.
+validity relies directly on LEMUR's predicted neighborhoods not
+being *too* wrong: if LEMUR's assignment is systematically biased
+rather than just noisy, the selected neighborhood inherits that
+bias. In practice this means conformal selection results are only
+as trustworthy as the underlying LEMUR fit.
 
 <div class="callout">
 <p>**Practical takeaway.** Read a size-2 prediction set from conformal
@@ -107,17 +107,17 @@ library(tibble)
 library(knitr)
 
 theme_set(
-  theme_minimal(base_size = 13) +
-    theme(
-      panel.grid.minor = element_blank(),
-      plot.title = element_text(face = "bold"),
-      legend.position = "bottom"
-    )
+    theme_minimal(base_size = 13) +
+        theme(
+            panel.grid.minor = element_blank(),
+            plot.title = element_text(face = "bold"),
+            legend.position = "bottom"
+        )
 )
 conformer_palette <- c(
-  "inside" = "#4472A8",
-  "outside" = "#D9822B",
-  "none" = "#B0B0B0"
+    "inside" = "#4472A8",
+    "outside" = "#D9822B",
+    "none" = "#B0B0B0"
 )
 ```
 
@@ -145,9 +145,9 @@ uncertainty patterns: `HIST3H2A`, `PTPRZ1`, and `HBEGF`.
 
 ```{r genes-of-interest}
 pan_affect_genes <- rowData(sce_reduced) |>
-  as_tibble() |>
-  dplyr::select(gid, gene) |>
-  filter(gene %in% c("HIST3H2A", "PTPRZ1", "HBEGF"))
+    as_tibble() |>
+    dplyr::select(gid, gene) |>
+    filter(gene %in% c("HIST3H2A", "PTPRZ1", "HBEGF"))
 
 kable(pan_affect_genes, caption = "Genes of interest for this vignette")
 ```
@@ -158,13 +158,13 @@ kable(pan_affect_genes, caption = "Genes of interest for this vignette")
 top of it in one call. The key arguments are:
 
 - `design_lemur` — the LEMUR design formula; here we adjust for
-  `patient_id` and estimate the effect of `condition`.
+`patient_id` and estimate the effect of `condition`.
 - `contrast_column` — which column of the design defines the
-  contrast of interest.
+contrast of interest.
 - `genes_of_interest` — restrict the (more expensive) conformal
-  layers to a gene subset; LEMUR itself is still fit genome-wide.
+layers to a gene subset; LEMUR itself is still fit genome-wide.
 - `what` — which conformal procedure(s) to run: `"conf_selection"`,
-  `"conf_clustering"`, or both.
+`"conf_clustering"`, or both.
 
 By default the target coverage is `cp_alpha`, and the data are split
 50% training / 50% calibration+test, with the calibration set taking
@@ -174,13 +174,14 @@ override these proportions).
 ```{r run-conformer}
 set.seed(2002)
 res <- conformeR(
-  sce_reduced,
-  design_lemur = ~ patient_id + condition,
-  contrast_column = "condition",
-  genes_of_interest = pan_affect_genes$gene,
-  what = c("conf_selection", "conf_clustering"),
-  n_cores = 1,
-  verbose = TRUE)
+    sce_reduced,
+    design_lemur = ~ patient_id + condition,
+    contrast_column = "condition",
+    genes_of_interest = pan_affect_genes$gene,
+    what = c("conf_selection", "conf_clustering"),
+    n_cores = 1,
+    verbose = TRUE
+)
 ```
 
 ## Conformal selection: how big is the affected neighborhood?
@@ -193,23 +194,26 @@ neighborhood size and its share of all cells in the fitted embedding.
 ```{r selection-summary}
 fit <- res$fit_lemur
 cp_out <- res$conf_results |>
-  dplyr::mutate(
-    inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x),
-    inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
-    outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)
-  ) |>
-  tidyr::unnest(c(inside_cs, inside_cc, outside_cc)) |>
-  dplyr::mutate(cell = rep(colnames(fit), nrow(fit)))
+    dplyr::mutate(
+        inside_cs = purrr::map(inside_cs, ~ colnames(fit) %in% .x),
+        inside_cc = purrr::map(inside_cc, ~ colnames(fit) %in% .x),
+        outside_cc = purrr::map(outside_cc, ~ colnames(fit) %in% .x)
+    ) |>
+    tidyr::unnest(c(inside_cs, inside_cc, outside_cc)) |>
+    dplyr::mutate(cell = rep(colnames(fit), nrow(fit)))
 
 selection_summary <- cp_out |>
-  group_by(gene) |>
-  summarize(
-    `Neighborhood size` = sum(inside_cs),
-    `% of cells` = round(sum(inside_cs) / ncol(res$fit_lemur), 2) * 100,
-    .groups = "drop")
+    group_by(gene) |>
+    summarize(
+        `Neighborhood size` = sum(inside_cs),
+        `% of cells` = round(sum(inside_cs) / ncol(res$fit_lemur), 2) * 100,
+        .groups = "drop"
+    )
 
-kable(selection_summary, caption =
-        "Conformal selection: neighborhood size per gene")
+kable(selection_summary,
+    caption =
+        "Conformal selection: neighborhood size per gene"
+)
 ```
 
 A larger `% of cells` means the gene's condition effect is detected
@@ -226,17 +230,20 @@ more ambiguous cells.
 
 ```{r clustering-summary}
 clustering_summary <- cp_out |>
-  group_by(gene) |>
-  summarize(
-    `Prediction set = inside` =
-      sum(inside_cc + outside_cc == 1 & inside_cc == 1),
-    `Prediction set = outside` =
-      sum(inside_cc + outside_cc == 1 & outside_cc == 1),
-    `Prediction set size 2` = sum(inside_cc + outside_cc != 1),
-    .groups = "drop")
+    group_by(gene) |>
+    summarize(
+        `Prediction set = inside` =
+            sum(inside_cc + outside_cc == 1 & inside_cc == 1),
+        `Prediction set = outside` =
+            sum(inside_cc + outside_cc == 1 & outside_cc == 1),
+        `Prediction set size 2 or empty` = sum(inside_cc + outside_cc != 1),
+        .groups = "drop"
+    )
 
-kable(clustering_summary, caption =
-        "Conformal clustering: prediction set composition per gene")
+kable(clustering_summary,
+    caption =
+        "Conformal clustering: prediction set composition per gene"
+)
 ```
 
 Reading this table alongside the selection table above shows where

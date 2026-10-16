@@ -34,34 +34,44 @@
 #' @noRd
 
 conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train,
-                            nei_cal, what, alpha, return_cq = FALSE) {
-  genes <- nei_train$name
-  softies <- stats::setNames(
-    lapply(genes, \(g) train_classifier(pred_train, nei_train, g)), genes)
-  predict_all <- \(sce) lapply(genes,
-                               \(g) predict_classifier(softies, sce, g))
-  pred_proba <- predict_all(pred_cal)
-  pred_proba_test <- predict_all(pred_test)
-  per_gene <- \(f) do.call(rbind.data.frame, lapply(seq_along(genes), f))
-  n_cal <- ncol(pred_cal)
-  test_cells <- colnames(pred_test)
-  do_cc <- "conf_clustering" %in% what
-  do_cs <- "conf_selection" %in% what
+    nei_cal, what, alpha, return_cq = FALSE) {
+    genes <- nei_train$name
+    softies <- stats::setNames(
+        lapply(genes, \(g) train_classifier(pred_train, nei_train, g)), genes
+    )
+    predict_all <- \(sce) lapply(
+        genes,
+        \(g) predict_classifier(softies, sce, g)
+    )
+    pred_proba <- predict_all(pred_cal)
+    pred_proba_test <- predict_all(pred_test)
+    per_gene <- \(f) do.call(rbind.data.frame, lapply(seq_along(genes), f))
+    n_cal <- ncol(pred_cal)
+    test_cells <- colnames(pred_test)
+    do_cc <- "conf_clustering" %in% what
+    do_cs <- "conf_selection" %in% what
 
-  res <- NULL
-  if (do_cc) {
-    res <- per_gene(\(i) .conf_clustering_gene(
-      pred_proba[[i]]$pred, pred_proba_test[[i]]$pred, genes[i],
-      test_cells, n_cal, alpha))
-  }
-  if (do_cs) {
-    score_cal <- .calibration_scores(pred_proba, nei_cal,
-                                     colnames(pred_cal))
-    label_set <- per_gene(\(i) .conf_selection_gene(
-      score_cal$scores_cal[score_cal$gene == genes[i]],
-      pred_proba_test[[i]]$pred, genes[i], test_cells, n_cal, alpha))
-    res <- if (is.null(res)) label_set else
-      dplyr::left_join(label_set, res, by = c("gene", "cell"))
-  }
-  .summarise_sets(res, alpha, keep_cq = do_cc && (return_cq || do_cs))
+    res <- NULL
+    if (do_cc) {
+        res <- per_gene(\(i) .conf_clustering_gene(
+            pred_proba[[i]]$pred, pred_proba_test[[i]]$pred, genes[i],
+            test_cells, n_cal, alpha
+        ))
+    }
+    if (do_cs) {
+        score_cal <- .calibration_scores(
+            pred_proba, nei_cal,
+            colnames(pred_cal)
+        )
+        label_set <- per_gene(\(i) .conf_selection_gene(
+            score_cal$scores_cal[score_cal$gene == genes[i]],
+            pred_proba_test[[i]]$pred, genes[i], test_cells, n_cal, alpha
+        ))
+        res <- if (is.null(res)) {
+            label_set
+        } else {
+            dplyr::left_join(label_set, res, by = c("gene", "cell"))
+        }
+    }
+    .summarise_sets(res, alpha, keep_cq = do_cc && (return_cq || do_cs))
 }

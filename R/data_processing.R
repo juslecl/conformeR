@@ -10,7 +10,7 @@
 #' @return list with original sce, proper training, calibration, and test sets
 #' @noRd
 data_processing <- function(sce, strat_by,
-                            size_train = 0.3, size_cal = 0.25) {
+    size_train = 0.3, size_cal = 0.25) {
     stopifnot(methods::is(sce, "SingleCellExperiment"))
     colData_df <- as.data.frame(SummarizedExperiment::colData(sce)) |>
         dplyr::mutate(
@@ -18,14 +18,16 @@ data_processing <- function(sce, strat_by,
             strata = interaction(!!!rlang::syms(strat_by))
         )
     split1 <- rsample::initial_split(colData_df,
-                                     prop = size_train,
-                                     strata = strata)
+        prop = size_train,
+        strata = strata
+    )
     remaining <- rsample::training(split1)
     test_idx <- rsample::testing(split1)$row
 
     split2 <- rsample::initial_split(remaining,
-                                     prop = 1 - size_cal,
-                                     strata = strata)
+        prop = 1 - size_cal,
+        strata = strata
+    )
     proper_idx <- rsample::training(split2)$row
     cal_idx <- rsample::testing(split2)$row
 

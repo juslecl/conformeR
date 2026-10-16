@@ -42,54 +42,47 @@
 #' @examples
 #' data("sce_reduced")
 #' out_conformer <- conformeR(sce_reduced,
-#'                            design_lemur = ~ patient_id + condition,
-#'                            contrast_column = "condition",
-#'                            n_embedding=15,
-#'                            genes_of_interest = c("ENSG00000163453",
-#'                            "ENSG00000163734"))
+#'     design_lemur = ~ patient_id + condition,
+#'     contrast_column = "condition",
+#'     n_embedding = 15,
+#'     genes_of_interest = c(
+#'         "ENSG00000163453",
+#'         "ENSG00000163734"
+#'     )
+#' )
 #' out_conformer
 #'
 #' @export
 
 conformeR <- function(sce, design_lemur = ~1, contrast_column,
-                      contrast_levels = NULL, n_embedding = 60,
-                      use_assay = "logcounts", test_fraction_lemur = 0.2,
-                      cp_train_frac = 0.5, cp_cal_frac = 0.25,
-                      cp_alpha = 0.05, genes_of_interest,
-                      what = c("conf_selection", "conf_clustering"),
-                      n_cores = 1, verbose = TRUE) {
-    out_lemur <- lemur_wf(sce, design_lemur, contrast_column,
-                          contrast_levels, n_embedding,
-                          use_assay, test_fraction_lemur,
-                          cp_train_frac, cp_cal_frac, verbose = TRUE)
-    gene_chunks <- split(genes_of_interest,
-                         ceiling(seq_along(genes_of_interest) / 5))
-    param <- BiocParallel::MulticoreParam(workers = n_cores)
-    chunk_results <- BiocParallel::bplapply(seq_along(gene_chunks),
-        function(i) {
-            chunk_genes <- gene_chunks[[i]]
-            pred_train_chunk <- out_lemur$pred_train[chunk_genes, ]
-            pred_cal_chunk <- out_lemur$pred_cal[chunk_genes, ]
-            pred_test_chunk <- out_lemur$pred_test[chunk_genes, ]
-            nei_train_chunk <- out_lemur$nei_train |>
-                dplyr::filter(name %in% chunk_genes) |>
-                dplyr::mutate(neighborhood =
-                      purrr::map(
-                        neighborhood, ~ colnames(out_lemur$pred_train) %in% .x))
-            nei_cal_chunk <- out_lemur$nei_cal |>
-                dplyr::filter(name %in% chunk_genes) |>
-                dplyr::mutate(neighborhood =
-                      purrr::map(
-                        neighborhood, ~ colnames(out_lemur$pred_cal) %in% .x))
-            chunk_res <- conformal_lemur(pred_train_chunk,pred_cal_chunk,
-                pred_test_chunk,nei_train_chunk,nei_cal_chunk,what,cp_alpha)
-            rm(pred_train_chunk,pred_cal_chunk,pred_test_chunk,nei_train_chunk,
-               nei_cal_chunk)
-            gc(FALSE)
-            chunk_res}, BPPARAM = param)
-    pred_set_all <- dplyr::bind_rows(chunk_results)
-    return(list(fit_lemur = out_lemur$pred_test[genes_of_interest, ],
-                nei_lemur = out_lemur$nei_test |>
-                  dplyr::filter(name %in% genes_of_interest),
-                conf_results = pred_set_all))
+    contrast_levels = NULL, n_embedding = 60,
+    use_assay = "logcounts", test_fraction_lemur = 0.2,
+    cp_train_frac = 0.5, cp_cal_frac = 0.25,
+    cp_alpha = 0.05, genes_of_interest,
+    what = c("conf_selection", "conf_clustering"),
+    n_cores = 1, verbose = TRUE) {
+    out <- lemur_wf(
+        sce, design_lemur, contrast_column, contrast_levels, n_embedding,
+        use_assay, test_fraction_lemur, cp_train_frac, cp_cal_frac,
+        verbose = verbose
+    )
+    chunks <- split(
+        genes_of_interest, ceiling(seq_along(genes_of_interest) / 5)
+    )
+    chunk_results <- BiocParallel::bplapply(
+        chunks,
+        \(genes) conformal_lemur(
+            out$pred_train[genes, ], out$pred_cal[genes, ],
+            out$pred_test[genes, ],
+            .nei_as_logical(out$nei_train, genes, colnames(out$pred_train)),
+            .nei_as_logical(out$nei_cal, genes, colnames(out$pred_cal)),
+            what, cp_alpha
+        ),
+        BPPARAM = BiocParallel::MulticoreParam(workers = n_cores)
+    )
+    list(
+        fit_lemur = out$pred_test[genes_of_interest, ],
+        nei_lemur = dplyr::filter(out$nei_test, name %in% genes_of_interest),
+        conf_results = dplyr::bind_rows(chunk_results)
+    )
 }
