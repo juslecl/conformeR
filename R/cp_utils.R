@@ -1,26 +1,4 @@
-#' Train a gene-specific classifier from LEMUR neighborhoods
-#'
-#' Trains a logistic regression classifier to predict LEMUR neighborhood
-#' membership for a given gene. The classifier uses gene-level differential
-#' expression and the LEMUR embedding as predictors. Principal component
-#' analysis is applied to the predictors, retaining the components explaining
-#' more than 90% of the total variance.
-#'
-#' @param pred_train A training \code{SingleCellExperiment} object containing
-#' the differential-expression matrix and LEMUR embedding.
-#' @param nei_train A data frame containing the LEMUR neighborhoods. Must
-#' contain a \code{name} column identifying genes and a \code{neighborhood}
-#' column containing the corresponding cell sets.
-#' @param gene_name Character string specifying the gene for which the
-#' classifier is trained.
-#'
-#' @return A list containing:
-#' \describe{
-#' \item{\code{fit}}{The fitted binomial logistic regression model.}
-#' \item{\code{pca}}{The PCA object fitted to the predictors.}
-#' \item{\code{k}}{The number of principal components retained, explaining
-#' more than 90% of the total variance.}
-#' }
+#' Train a gene-specific classifier from LEMUR neighborhoods label
 #' @noRd
 
 train_classifier <- function(pred_train, nei_train, gene_name) {
@@ -48,28 +26,8 @@ train_classifier <- function(pred_train, nei_train, gene_name) {
     )
 }
 
-#' Predict neighborhood membership for new cells
-#'
-#' Applies a trained gene-specific classifier to new cells. The differential
-#' expression values and LEMUR embedding are projected onto the principal
-#' components learned during training. The retained components are then used
-#' to predict the probability of neighborhood membership for each cell.
-#'
-#' @param trained_classifier A named list of trained gene-specific classifiers,
-#'   as returned by \code{train_classifier}. The list must contain an element
-#'   corresponding to \code{gene_name}.
-#' @param pred_sce A \code{SingleCellExperiment} object containing the
-#'   differential-expression matrix and LEMUR embedding for the cells to
-#'   classify.
-#' @param gene_name Character string specifying the gene for which predictions
-#'   are required.
-#'
-#' @return A data frame containing:
-#'   \describe{
-#'     \item{\code{pred}}{Predicted probability of neighborhood membership.}
-#'     \item{\code{cell_id}}{Cell identifiers from \code{pred_sce}.}
-#'     \item{\code{gene}}{The gene name.}
-#'   }
+#' Predict neighborhood membership probability for new cells
+#' Uses the model fitted by `train_classifier`
 #' @noRd
 
 predict_classifier <- function(trained_classifier, pred_sce, gene_name) {
@@ -102,6 +60,10 @@ predict_classifier <- function(trained_classifier, pred_sce, gene_name) {
     )
 }
 
+#' Fits LEMUR standard workflow to the data.
+#' Splits data for training, calibration and test sets.
+#' Finds LEMUR neighborhood for each subset.
+#' @noRd
 lemur_wf <- function(sce, design_lemur, contrast_column,
                      contrast_levels, n_embedding,
                      use_assay, test_fraction_lemur,
@@ -146,6 +108,8 @@ lemur_wf <- function(sce, design_lemur, contrast_column,
   ))
 }
 
+#' Contrast parser for conformeR
+#' @noRd
 .build_lemur_contrast <- function(fit, column, levels = NULL) {
     col_data <- SummarizedExperiment::colData(fit)
     if (!column %in% colnames(col_data)) {
@@ -170,4 +134,55 @@ lemur_wf <- function(sce, design_lemur, contrast_column,
         rlang::call2("cond", !!!args)
     }
     rlang::expr(!!make_cond_call(levels[1]) - !!make_cond_call(levels[2]))
+}
+
+
+#' Conformal clustering prediction sets for one gene
+#' @noRd
+.conf_clustering_gene <- function(p_cal, p_test, gene, cells, n_cal, alpha) {
+  s_cal <- 1 - pmax(p_cal, 1 - p_cal)
+  q <- sort(s_cal)[ceiling((n_cal + 1) * (1 - alpha))]
+  data.frame(gene = gene, cell = cells,
+             inside_cc = 1 - p_test <= q, outside_cc = p_test <= q,
+             conf_quantile = q)
+}
+
+#' Calibration scores (1000 * neighborhood - pred) for all genes
+#' @noRd
+.calibration_scores <- function(pred_proba, nei_cal, cal_cells) {
+  gt_cal <- nei_cal |>
+    tidyr::unnest(neighborhood) |>
+    dplyr::mutate(cell_id = rep(cal_cells, nrow(nei_cal))) |>
+    dplyr::rename("gene" = "name")
+  do.call(rbind.data.frame, pred_proba) |>
+    dplyr::left_join(gt_cal, by = c("cell_id", "gene")) |>
+    dplyr::mutate(scores_cal = 1000 * neighborhood - pred)
+}
+
+#' Randomised conformal p-values + BH selection for one gene
+#' @noRd
+.conf_selection_gene <- function(cal_scores, p_test, gene, cells, n_cal,
+                                 alpha) {
+  s_test <- -p_test
+  below <- vapply(s_test, \(s) sum(cal_scores < s), numeric(1))
+  ties <- vapply(s_test, \(s) sum(cal_scores == s), numeric(1))
+  p <- (below + stats::runif(length(s_test)) * (1 + ties)) / (n_cal + 1)
+  data.frame(gene = gene, cell = cells,
+             inside_cs = stats::p.adjust(p, method = "BH") < alpha)
+}
+
+#' Collapse cell-level results into per-gene cell lists
+#' @noRd
+.summarise_sets <- function(res, alpha, keep_cq) {
+  cols <- intersect(c("inside_cs", "inside_cc", "outside_cc"), names(res))
+  res <- dplyr::group_by(res, gene)
+  out <- if (keep_cq) {
+    dplyr::summarise(res,
+                     dplyr::across(dplyr::all_of(cols), ~ list(cell[.x])),
+                     conf_quantile = mean(conf_quantile))
+  } else {
+    dplyr::summarise(res,
+                     dplyr::across(dplyr::all_of(cols), ~ list(cell[.x])))
+  }
+  dplyr::mutate(out, cp_alpha = alpha)
 }
