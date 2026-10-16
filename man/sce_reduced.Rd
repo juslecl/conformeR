@@ -14,7 +14,7 @@ tissue with single-cell RNA-seq. \emph{Genome Medicine}, 13, 82.
 GEO accession: GSE148842.
 }
 \usage{
-sce_reduced
+data("sce_reduced")
 }
 \description{
 A small SingleCellExperiment object used to demonstrate

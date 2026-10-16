@@ -11,7 +11,9 @@
 #' Deconvolution of cell type-specific drug responses in human tumor
 #' tissue with single-cell RNA-seq. \emph{Genome Medicine}, 13, 82.
 #' GEO accession: GSE148842.
-#'
+#' @docType data
+#' @keywords datasets
+#' @usage data("sce_reduced")
 #' @details
 #' This object is a subset of the dataset from Zhao et al. (2021),
 #' processed for use as an example dataset in \pkg{conformeR}.

@@ -80,11 +80,14 @@ interest. Genes are processed in chunks to allow parallel computation.
 \examples{
 data("sce_reduced")
 out_conformer <- conformeR(sce_reduced,
-                           design_lemur = ~ patient_id + condition,
-                           contrast_column = "condition",
-                           n_embedding=15,
-                           genes_of_interest = c("ENSG00000163453",
-                           "ENSG00000163734"))
+    design_lemur = ~ patient_id + condition,
+    contrast_column = "condition",
+    n_embedding = 15,
+    genes_of_interest = c(
+        "ENSG00000163453",
+        "ENSG00000163734"
+    )
+)
 out_conformer
 
 }
