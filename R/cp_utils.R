@@ -24,28 +24,28 @@
 #' @noRd
 
 train_classifier <- function(pred_train, nei_train, gene_name) {
-  idx <- which(nei_train$name == gene_name)
-  y <- as.factor(as.numeric(nei_train$neighborhood[[idx]]))
-  expr_de <- SummarizedExperiment::assay(pred_train, "DE")[gene_name, ]
-  embedding <- t(pred_train$embedding)
-  colnames(embedding) <- paste0("dim", seq_len(ncol(embedding)))
-  X <- data.frame(
-    expr_de = expr_de,
-    embedding
-  )
-  pca <- stats::prcomp(X, scale. = TRUE)
-  var_expl <- cumsum(pca$sdev^2) / sum(pca$sdev^2)
-  k <- which(var_expl > 0.9)[1]
-  dat <- data.frame(
-    y = y,
-    pca$x[, seq_len(k)]
-  )
-  fit <- stats::glm(y ~ ., data = dat, family = "binomial")
-  list(
-    fit = fit,
-    pca = pca,
-    k = k
-  )
+    idx <- which(nei_train$name == gene_name)
+    y <- as.factor(as.numeric(nei_train$neighborhood[[idx]]))
+    expr_de <- SummarizedExperiment::assay(pred_train, "DE")[gene_name, ]
+    embedding <- t(pred_train$embedding)
+    colnames(embedding) <- paste0("dim", seq_len(ncol(embedding)))
+    X <- data.frame(
+        expr_de = expr_de,
+        embedding
+    )
+    pca <- stats::prcomp(X, scale. = TRUE)
+    var_expl <- cumsum(pca$sdev^2) / sum(pca$sdev^2)
+    k <- which(var_expl > 0.9)[1]
+    dat <- data.frame(
+        y = y,
+        pca$x[, seq_len(k)]
+    )
+    fit <- stats::glm(y ~ ., data = dat, family = "binomial")
+    list(
+        fit = fit,
+        pca = pca,
+        k = k
+    )
 }
 
 #' Predict neighborhood membership for new cells
@@ -73,56 +73,101 @@ train_classifier <- function(pred_train, nei_train, gene_name) {
 #' @noRd
 
 predict_classifier <- function(trained_classifier, pred_sce, gene_name) {
-  expr_de <- SummarizedExperiment::assay(pred_sce, "DE")[gene_name, ]
-  embedding <- t(pred_sce$embedding)
-  colnames(embedding) <- paste0("dim", seq_len(ncol(embedding)))
-  X_new <- data.frame(
-    expr_de = expr_de,
-    embedding
-  )
-  pca_scores <- stats::predict(
-    trained_classifier[[gene_name]]$pca,
-    newdata = X_new
-  )
+    expr_de <- SummarizedExperiment::assay(pred_sce, "DE")[gene_name, ]
+    embedding <- t(pred_sce$embedding)
+    colnames(embedding) <- paste0("dim", seq_len(ncol(embedding)))
+    X_new <- data.frame(
+        expr_de = expr_de,
+        embedding
+    )
+    pca_scores <- stats::predict(
+        trained_classifier[[gene_name]]$pca,
+        newdata = X_new
+    )
 
-  dat_new <- data.frame(
-    pca_scores[, seq_len(trained_classifier[[gene_name]]$k), drop = FALSE]
-  )
+    dat_new <- data.frame(
+        pca_scores[, seq_len(trained_classifier[[gene_name]]$k), drop = FALSE]
+    )
 
-  pred <- stats::predict(
-    trained_classifier[[gene_name]]$fit,
-    newdata = dat_new,
-    type = "response"
-  )
+    pred <- stats::predict(
+        trained_classifier[[gene_name]]$fit,
+        newdata = dat_new,
+        type = "response"
+    )
 
-  data.frame(
-    pred = pred,
-    cell_id = colnames(pred_sce),
-    gene = gene_name
-  )
+    data.frame(
+        pred = pred,
+        cell_id = colnames(pred_sce),
+        gene = gene_name
+    )
 }
 
+lemur_wf <- function(sce, design_lemur, contrast_column,
+                     contrast_levels, n_embedding,
+                     use_assay, test_fraction_lemur,
+                     cp_train_frac, cp_cal_frac, verbose = TRUE) {
+  fit <- lemur::lemur(sce, design = design_lemur, n_embedding = n_embedding,
+                      test_fraction = test_fraction_lemur,
+                      use_assay = use_assay)
+  SingleCellExperiment::reducedDim(fit, "fit_umap") <-
+  uwot::umap(t(fit$embedding))
+  fit <- lemur::align_harmony(fit)
+  SingleCellExperiment::reducedDim(fit, "fit_al_umap") <-
+  uwot::umap(t(fit$embedding))
+  contrast_expr <- .build_lemur_contrast(fit, contrast_column, contrast_levels)
+  fit <- rlang::inject(lemur::test_de(fit, contrast = !!contrast_expr))
+  covariates <- all.vars(design_lemur)
+  split <- data_processing(fit,
+                    strat_by = covariates,
+                    size_train = cp_train_frac,
+                    size_cal = cp_cal_frac)
+  pred_train <- split$train
+  pred_cal <- split$cal
+  pred_test <- split$test
+  nei_train <- lemur::find_de_neighborhoods(
+    pred_train,
+    group_by = glmGamPoi::vars(!!!rlang::syms(covariates)),
+    test_method = "edgeR")
+  nei_cal <- lemur::find_de_neighborhoods(
+    pred_cal,
+    group_by = glmGamPoi::vars(!!!rlang::syms(covariates)),
+    test_method = "edgeR")
+  nei_test <- lemur::find_de_neighborhoods(
+    pred_test,
+    group_by = glmGamPoi::vars(!!!rlang::syms(covariates)),
+    test_method = "edgeR")
+  return(list(
+    pred_train = pred_train,
+    pred_cal = pred_cal,
+    pred_test = pred_test,
+    nei_train = nei_train,
+    nei_cal = nei_cal,
+    nei_test = nei_test
+  ))
+}
 
 .build_lemur_contrast <- function(fit, column, levels = NULL) {
-  col_data <- SummarizedExperiment::colData(fit)
-  if (!column %in% colnames(col_data)) {
-    stop(sprintf("'%s' is not a column of colData(sce).", column))
-  }
-  if (is.null(levels)) {
-    vals <- col_data[[column]]
-    lv <- if (is.factor(vals)) levels(vals) else sort(unique(as.character(vals)))
-    lv <- lv[!is.na(lv)]
-    if (length(lv) != 2) {
-      stop(sprintf(
-        "Column '%s' has %d levels (%s) - specify contrast_levels = c(level_of_interest, reference_level) explicitly.",
-        column, length(lv), paste(lv, collapse = ", ")
-      ))
+    col_data <- SummarizedExperiment::colData(fit)
+    if (!column %in% colnames(col_data)) {
+        stop(sprintf("'%s' is not a column of colData(sce).", column))
     }
-    levels <- lv
-  }
-  make_cond_call <- function(lvl) {
-    args <- stats::setNames(list(lvl), column)
-    rlang::call2("cond", !!!args)
-  }
-  rlang::expr(!!make_cond_call(levels[1]) - !!make_cond_call(levels[2]))
+    if (is.null(levels)) {
+        vals <- col_data[[column]]
+        lv <- if (is.factor(vals)) {levels(vals)}
+        else {sort(unique(as.character(vals)))}
+        lv <- lv[!is.na(lv)]
+        if (length(lv) != 2) {
+            stop(sprintf(
+                "Column '%s' has %d levels (%s) - specify contrast_levels =
+                c(level_of_interest, reference_level) explicitly.",
+                column, length(lv), paste(lv, collapse = ", ")
+            ))
+        }
+        levels <- lv
+    }
+    make_cond_call <- function(lvl) {
+        args <- stats::setNames(list(lvl), column)
+        rlang::call2("cond", !!!args)
+    }
+    rlang::expr(!!make_cond_call(levels[1]) - !!make_cond_call(levels[2]))
 }

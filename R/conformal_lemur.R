@@ -22,7 +22,8 @@
 #'   Can contain \code{"conf_clustering"}, \code{"conf_selection"}, or both.
 #' @param alpha Numeric value specifying the target miscoverage level.
 #'   Also used as the significance level for the Benjamini-Hochberg procedure.
-#' @param return_cq logical specifying whether score quantile for conformal clustering should be returned
+#' @param return_cq logical specifying whether score quantile
+#' for conformal clustering should be returned
 #' (for article simulations only)
 #'
 #' @return A data frame containing the conformal results. If
@@ -32,201 +33,203 @@
 #'   requested, the results are joined by gene and cell.
 #' @noRd
 
-conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train, nei_cal, what, alpha, return_cq = FALSE) {
-  genes <- nei_train$name
-  softies <- lapply(
-    genes,
-    function(gene_name) {
-      train_classifier(pred_train, nei_train, gene_name)
-    }
-  )
-  names(softies) <- genes
+conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train,
+                            nei_cal, what, alpha, return_cq = FALSE) {
+    genes <- nei_train$name
+    softies <- lapply(
+        genes,
+        function(gene_name) {
+            train_classifier(pred_train, nei_train, gene_name)
+        }
+    )
+    names(softies) <- genes
 
-  pred_proba <- lapply(
-    genes,
-    function(gene_name) {
-      predict_classifier(softies, pred_cal, gene_name)
-    }
-  )
-
-  pred_proba_test <- lapply(
-    genes,
-    function(gene_name) {
-      predict_classifier(softies, pred_test, gene_name)
-    }
-  )
-
-  if ("conf_clustering" %in% what) {
-    n_cal <- ncol(pred_cal)
-
-    pred_set_list <- lapply(
-      seq_along(genes),
-      function(row) {
-        p_cal <- pred_proba[[row]]$pred
-
-        s_cal <- 1 - pmax(p_cal, 1 - p_cal)
-
-        q <- sort(s_cal)[ceiling((n_cal + 1) * (1 - alpha))]
-
-        p_test <- pred_proba_test[[row]]$pred
-
-        cbind.data.frame(
-          inside_cc = (1 - p_test <= q),
-          outside_cc = (p_test <= q)
-        ) |>
-          dplyr::mutate(
-            cell = colnames(pred_test),
-            gene = genes[row],
-            conf_quantile = q
-          ) |>
-          dplyr::select(gene, cell, inside_cc, outside_cc, conf_quantile)
-      }
+    pred_proba <- lapply(
+        genes,
+        function(gene_name) {
+            predict_classifier(softies, pred_cal, gene_name)
+        }
     )
 
-    pred_set <- do.call(rbind.data.frame, pred_set_list)
-  }
+    pred_proba_test <- lapply(
+        genes,
+        function(gene_name) {
+            predict_classifier(softies, pred_test, gene_name)
+        }
+    )
 
-  if ("conf_selection" %in% what) {
-    pred_proba <- do.call(rbind.data.frame, pred_proba)
+    if ("conf_clustering" %in% what) {
+        n_cal <- ncol(pred_cal)
 
-    gt_cal <- nei_cal |>
-      tidyr::unnest(neighborhood) |>
-      dplyr::mutate(cell_id = rep(colnames(pred_cal), nrow(nei_cal))) |>
-      dplyr::rename("gene" = "name")
+        pred_set_list <- lapply(
+            seq_along(genes),
+            function(row) {
+                p_cal <- pred_proba[[row]]$pred
 
-    score_cal <- pred_proba |>
-      dplyr::left_join(gt_cal, by = c("cell_id", "gene"))
+                s_cal <- 1 - pmax(p_cal, 1 - p_cal)
 
-    score_cal <- score_cal |>
-      dplyr::mutate(scores_cal = 1000 * neighborhood - pred)
+                q <- sort(s_cal)[ceiling((n_cal + 1) * (1 - alpha))]
 
-    scores_test <- lapply(
-      seq_along(genes),
-      function(row) {
-        cbind.data.frame(
-          scores_test = -pred_proba_test[[row]]$pred,
-          gene = genes[row],
-          cell = colnames(pred_test)
+                p_test <- pred_proba_test[[row]]$pred
+
+                cbind.data.frame(
+                    inside_cc = (1 - p_test <= q),
+                    outside_cc = (p_test <= q)
+                ) |>
+                    dplyr::mutate(
+                        cell = colnames(pred_test),
+                        gene = genes[row],
+                        conf_quantile = q
+                    ) |>
+                    dplyr::select(gene, cell,
+                                  inside_cc, outside_cc, conf_quantile)
+            }
         )
-      }
-    )
 
-    conf_pval <- lapply(
-      seq_along(scores_test),
-      function(gene) {
-        current_gene <- unique(score_cal$gene)[gene]
-        cal_scores <- score_cal$scores_cal[
-          score_cal$gene == current_gene
-        ]
+        pred_set <- do.call(rbind.data.frame, pred_set_list)
+    }
 
-        p <- vapply(
-          scores_test[[gene]][, 1],
-          function(score) {
-            (
-              (
-                sum(cal_scores < score) +
-                  stats::runif(1) * (1 + sum(cal_scores == score))
-              ) /
-                (ncol(pred_cal) + 1)
+    if ("conf_selection" %in% what) {
+        pred_proba <- do.call(rbind.data.frame, pred_proba)
+
+        gt_cal <- nei_cal |>
+            tidyr::unnest(neighborhood) |>
+            dplyr::mutate(cell_id = rep(colnames(pred_cal), nrow(nei_cal))) |>
+            dplyr::rename("gene" = "name")
+
+        score_cal <- pred_proba |>
+            dplyr::left_join(gt_cal, by = c("cell_id", "gene"))
+
+        score_cal <- score_cal |>
+            dplyr::mutate(scores_cal = 1000 * neighborhood - pred)
+
+        scores_test <- lapply(
+            seq_along(genes),
+            function(row) {
+                cbind.data.frame(
+                    scores_test = -pred_proba_test[[row]]$pred,
+                    gene = genes[row],
+                    cell = colnames(pred_test)
+                )
+            }
+        )
+
+        conf_pval <- lapply(
+            seq_along(scores_test),
+            function(gene) {
+                current_gene <- unique(score_cal$gene)[gene]
+                cal_scores <- score_cal$scores_cal[
+                    score_cal$gene == current_gene
+                ]
+
+                p <- vapply(
+                    scores_test[[gene]][, 1],
+                    function(score) {
+                        (
+                            (
+                                sum(cal_scores < score) +
+                                stats::runif(1) * (1 + sum(cal_scores == score))
+                            ) /
+                                (ncol(pred_cal) + 1)
+                        )
+                    },
+                    numeric(1)
+                )
+
+                cbind.data.frame(
+                    conformal_p_val = p,
+                    cell = colnames(pred_test)
+                )
+            }
+        )
+
+        scores_test <- do.call(rbind.data.frame, scores_test)
+
+        label_set <- lapply(seq_along(conf_pval), function(gene) {
+            df <- conf_pval[[gene]] |>
+                as.data.frame() |>
+                dplyr::mutate(
+                    inside_cs = stats::p.adjust(
+                        as.numeric(conformal_p_val),
+                        method = "BH"
+                    ) < alpha,
+                    gene = genes[gene]
+                ) |>
+                dplyr::select(gene, cell, inside_cs)
+
+            df
+        }) |>
+            (\(lst) do.call(rbind.data.frame, lst))()
+    }
+
+    if (("conf_clustering" %in% what) & ("conf_selection" %in% what)) {
+        if (return_cq) {
+            return(
+                dplyr::left_join(
+                    label_set,
+                    pred_set,
+                    by = c("gene", "cell")
+                ) |>
+                    dplyr::group_by(gene) |>
+                    dplyr::summarise(
+                        dplyr::across(
+                            c(inside_cs, inside_cc, outside_cc),
+                            ~ list(cell[.x])
+                        ),
+                        conf_quantile = mean(conf_quantile)
+                    ) |>
+                    dplyr::mutate(cp_alpha = alpha)
             )
-          },
-          numeric(1)
-        )
-
-        cbind.data.frame(
-          conformal_p_val = p,
-          cell = colnames(pred_test)
-        )
-      }
-    )
-
-    scores_test <- do.call(rbind.data.frame, scores_test)
-
-    label_set <- lapply(seq_along(conf_pval), function(gene) {
-      df <- conf_pval[[gene]] |>
-        as.data.frame() |>
-        dplyr::mutate(
-          inside_cs = stats::p.adjust(
-            as.numeric(conformal_p_val),
-            method = "BH"
-          ) < alpha,
-          gene = genes[gene]
-        ) |>
-        dplyr::select(gene, cell, inside_cs)
-
-      df
-    }) |>
-      (\(lst) do.call(rbind.data.frame, lst))()
-  }
-
-  if (("conf_clustering" %in% what) & ("conf_selection" %in% what)) {
-    if (return_cq) {
-      return(
-        dplyr::left_join(
-          label_set,
-          pred_set,
-          by = c("gene", "cell")
-        ) |>
-          dplyr::group_by(gene) |>
-          dplyr::summarise(
-            dplyr::across(
-              c(inside_cs, inside_cc, outside_cc),
-              ~ list(cell[.x])
-            ),
-            conf_quantile = mean(conf_quantile)
-          ) |>
-          dplyr::mutate(cp_alpha = alpha)
-      )
+        } else {
+            return(
+                dplyr::left_join(
+                    label_set,
+                    pred_set,
+                    by = c("gene", "cell")
+                ) |>
+                    dplyr::group_by(gene) |>
+                    dplyr::summarise(
+                        dplyr::across(
+                            c(inside_cs, inside_cc, outside_cc),
+                            ~ list(cell[.x])
+                        ),
+                        conf_quantile = mean(conf_quantile)
+                    ) |>
+                    dplyr::mutate(cp_alpha = alpha)
+            )
+        }
+    } else if ("conf_clustering" %in% what) {
+        if (return_cq) {
+            return(pred_set |>
+                dplyr::group_by(gene) |>
+                dplyr::summarise(
+                    dplyr::across(
+                        c(inside_cc, outside_cc),
+                        ~ list(cell[.x])
+                    ),
+                    conf_quantile = mean(conf_quantile)
+                ) |>
+                dplyr::mutate(cp_alpha = alpha))
+        } else {
+            return(pred_set |>
+                dplyr::group_by(gene) |>
+                dplyr::summarise(
+                    dplyr::across(
+                        c(inside_cc, outside_cc),
+                        ~ list(cell[.x])
+                    )
+                ) |>
+                dplyr::mutate(cp_alpha = alpha))
+        }
     } else {
-      return(
-        dplyr::left_join(
-          label_set,
-          pred_set,
-          by = c("gene", "cell")
-        ) |>
-          dplyr::group_by(gene) |>
-          dplyr::summarise(
-            dplyr::across(
-              c(inside_cs, inside_cc, outside_cc),
-              ~ list(cell[.x])
-            ),
-            conf_quantile = mean(conf_quantile)
-          ) |>
-          dplyr::mutate(cp_alpha = alpha)
-      )
+        return(label_set |>
+            dplyr::group_by(gene) |>
+            dplyr::summarise(
+                dplyr::across(
+                    c(inside_cs),
+                    ~ list(cell[.x])
+                )
+            ) |>
+            dplyr::mutate(cp_alpha = alpha))
     }
-  } else if ("conf_clustering" %in% what) {
-    if (return_cq) {
-      return(pred_set |>
-        dplyr::group_by(gene) |>
-        dplyr::summarise(
-          dplyr::across(
-            c(inside_cc, outside_cc),
-            ~ list(cell[.x])
-          ),
-          conf_quantile = mean(conf_quantile)
-        ) |>
-        dplyr::mutate(cp_alpha = alpha))
-    } else {
-      return(pred_set |>
-        dplyr::group_by(gene) |>
-        dplyr::summarise(
-          dplyr::across(
-            c(inside_cc, outside_cc),
-            ~ list(cell[.x])
-          )
-        ) |>
-        dplyr::mutate(cp_alpha = alpha))
-    }
-  } else {
-    return(label_set |>
-      dplyr::group_by(gene) |>
-      dplyr::summarise(
-        dplyr::across(
-          c(inside_cs),
-          ~ list(cell[.x])
-        )
-      ) |>
-      dplyr::mutate(cp_alpha = alpha))
-  }
 }

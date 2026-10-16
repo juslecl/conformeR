@@ -37,7 +37,8 @@ knitr::opts_chunk$set(
 ## Overview
 
 `LEMUR` fits a low-dimensional embedding and assigns each cell to a
-*neighborhood* when they share a similar response to a given contrast and gene. Because this
+*neighborhood* when they share a similar response to a given contrast and gene. 
+Because this
 assignment is itself the output of a fitted model, it inherits sampling
 variability: refit the model on a slightly different draw of cells, and
 the neighborhood boundaries shift. `conformeR` wraps this neighborhood
@@ -113,7 +114,11 @@ theme_set(
       legend.position = "bottom"
     )
 )
-conformer_palette <- c("inside" = "#4472A8", "outside" = "#D9822B", "none" = "#B0B0B0")
+conformer_palette <- c(
+  "inside" = "#4472A8",
+  "outside" = "#D9822B",
+  "none" = "#B0B0B0"
+)
 ```
 
 ## Example dataset
@@ -175,8 +180,7 @@ res <- conformeR(
   genes_of_interest = pan_affect_genes$gene,
   what = c("conf_selection", "conf_clustering"),
   n_cores = 1,
-  verbose = TRUE
-)
+  verbose = TRUE)
 ```
 
 ## Conformal selection: how big is the affected neighborhood?
@@ -202,10 +206,10 @@ selection_summary <- cp_out |>
   summarize(
     `Neighborhood size` = sum(inside_cs),
     `% of cells` = round(sum(inside_cs) / ncol(res$fit_lemur), 2) * 100,
-    .groups = "drop"
-  )
+    .groups = "drop")
 
-kable(selection_summary, caption = "Conformal selection: neighborhood size per gene")
+kable(selection_summary, caption =
+        "Conformal selection: neighborhood size per gene")
 ```
 
 A larger `% of cells` means the gene's condition effect is detected
@@ -224,13 +228,15 @@ more ambiguous cells.
 clustering_summary <- cp_out |>
   group_by(gene) |>
   summarize(
-    `Prediction set = inside` = sum(inside_cc + outside_cc == 1 & inside_cc == 1),
-    `Prediction set = outside` = sum(inside_cc + outside_cc == 1 & outside_cc == 1),
+    `Prediction set = inside` =
+      sum(inside_cc + outside_cc == 1 & inside_cc == 1),
+    `Prediction set = outside` =
+      sum(inside_cc + outside_cc == 1 & outside_cc == 1),
     `Prediction set size 2` = sum(inside_cc + outside_cc != 1),
-    .groups = "drop"
-  )
+    .groups = "drop")
 
-kable(clustering_summary, caption = "Conformal clustering: prediction set composition per gene")
+kable(clustering_summary, caption =
+        "Conformal clustering: prediction set composition per gene")
 ```
 
 Reading this table alongside the selection table above shows where
@@ -248,7 +254,7 @@ with the gene's effect.
 
 ### Conformal selection
 
-```{r plot-selection, fig.cap = "Conformal selection overlaid on LEMUR neighborhoods, one panel per gene."}
+```{r plot-selection, fig.cap = "Conformal selection overlaid on LEMUR"}
 plotter_conformal_selection(res, pan_affect_genes$gene)
 ```
 
@@ -259,7 +265,7 @@ chosen coverage level.
 
 ### Conformal clustering
 
-```{r plot-clustering, fig.cap = "Conformal prediction sets overlaid on LEMUR neighborhoods, one panel per gene."}
+```{r plot-clustering, fig.cap = "Conformal prediction sets overlaid on LEMUR"}
 plotter_conformal_clustering(res, pan_affect_genes$gene)
 ```
 

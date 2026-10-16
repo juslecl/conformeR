@@ -2,7 +2,8 @@
 % Please edit documentation in R/conformeR.R
 \name{conformeR}
 \alias{conformeR}
-\title{LEMUR analysis for neighborhoods on predicted gene differential expression with conformal methods}
+\title{LEMUR analysis for neighborhoods on predicted gene differential
+expression with conformal methods}
 \usage{
 conformeR(
   sce,
@@ -30,7 +31,8 @@ expression data.}
 \item{contrast_column}{A column name specifying the comparison used for
 differential-expression testing in LEMUR.}
 
-\item{contrast_levels}{when \code{contrast_column} has more than two levels, specify which two are tested again each other.}
+\item{contrast_levels}{when \code{contrast_column} has more than two levels,
+specify which two are tested again each other.}
 
 \item{n_embedding}{Number of dimensions in the LEMUR embedding.}
 
@@ -45,7 +47,8 @@ differential-expression testing in LEMUR.}
 \item{cp_alpha}{Miscoverage level for the conformal procedures.}
 
 \item{genes_of_interest}{Character vector containing the names of genes
-to include in the conformal analysis.They need to correspond to the row names of the sce.}
+to include in the conformal analysis.They need to correspond to the
+row names of the sce.}
 
 \item{what}{Character vector specifying the conformal procedure(s) to run.}
 
@@ -73,4 +76,15 @@ covariates specified in the LEMUR design formula.
 \details{
 The conformal procedures are applied to a subset of genes of
 interest. Genes are processed in chunks to allow parallel computation.
+}
+\examples{
+data("sce_reduced")
+out_conformer <- conformeR(sce_reduced,
+                           design_lemur = ~ patient_id + condition,
+                           contrast_column = "condition",
+                           n_embedding=15,
+                           genes_of_interest = c("ENSG00000163453",
+                           "ENSG00000163734"))
+out_conformer
+
 }
