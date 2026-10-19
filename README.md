@@ -2,18 +2,21 @@
 
 Conformal clustering of gene differential expression.
 
-`conformeR` is a wrapper around the [LEMUR](https://github.com/const-ae/lemur) R package that adds
-uncertainty quantification to LEMUR's neighborhood on predicted differential expression, using conformal prediction, and without
+`conformeR` is a wrapper around the [LEMUR](https://github.com/const-ae/lemur) 
+R package that adds
+uncertainty quantification to LEMUR's neighborhood on predicted differential 
+expression, using conformal prediction, and without
 altering the underlying model.
 
 ## Installation
 
-`conformeR` is not yet on CRAN or Bioconductor. Install the development version directly from
-GitHub.
-
+`conformeR` is not yet on CRAN or Bioconductor. Install the development version 
+running:
 ```r
-install.packages("remotes")
-remotes::install_github("juslecl/conformeR", build_vignettes = TRUE)
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("juslecl/conformeR")
 ```
 
 ## Usage

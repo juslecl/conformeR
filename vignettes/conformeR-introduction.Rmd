@@ -36,14 +36,17 @@ margin: 0.3em 0;
 
 ## Overview
 
-`LEMUR` fits a low-dimensional embedding and assigns each cell to a
-*neighborhood* when they share a similar response to a given contrast and gene. 
-Because this
-assignment is itself the output of a fitted model, it inherits sampling
-variability: refit the model on a slightly different draw of cells, and
-the neighborhood boundaries shift. `conformeR` wraps this neighborhood
-construction step in a conformal prediction layer so that this
-variability can be quantified rather than ignored.
+LEMUR fits a low-dimensional embedding and assigns cells to neighborhoods 
+based on similar responses to a given contrast and gene. 
+Because these neighborhood assignments are themselves derived from a fitted 
+model, they are subject to sampling variability: refitting the model on a 
+different sample of cells can shift the neighborhood boundaries.
+
+conformeR quantifies this uncertainty by wrapping the neighborhood construction
+step in a conformal prediction framework. It is designed to integrate naturally
+into existing Bioconductor workflows for single-cell data analysis, operating 
+downstream of SingleCellExperiment-based preprocessing and LEMUR analyses to 
+provide uncertainty-aware inference for neighborhood assignments.
 
 It provides two complementary views of that uncertainty:
 
