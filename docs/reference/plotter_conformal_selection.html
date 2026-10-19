@@ -20,7 +20,7 @@ conformal selection status (density contours)."><!-- mathjax --><script src="htt
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">conformeR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.0</span>
       </span>
     </div>
 
@@ -35,10 +35,19 @@ conformal selection status (density contours)."><!-- mathjax --><script src="htt
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/conformeR-introduction.html">conformeR-introduction</a>
+      <a href="../articles/conformeR-introduction.html">Getting Started with conformeR</a>
     </li>
   </ul></li>
-      </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
+      </ul><ul class="nav navbar-nav navbar-right"><li>
+  <a href="https://github.com/juslecl/conformeR/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+
+  </a>
+</li>
+      </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
@@ -48,7 +57,7 @@ conformal selection status (density contours)."><!-- mathjax --><script src="htt
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Plot conformal selection results on the LEMUR embedding</h1>
-
+    <small class="dont-index">Source: <a href="https://github.com/juslecl/conformeR/blob/HEAD/R/plotter.R" class="external-link"><code>R/plotter.R</code></a></small>
     <div class="hidden name"><code>plotter_conformal_selection.Rd</code></div>
     </div>
 
@@ -85,6 +94,55 @@ requested genes on the aligned LEMUR UMAP embedding, with one shared
 gene panels (instead of one legend per gene).</p>
     </div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sce_reduced"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">out_conformer</span> <span class="op">&lt;-</span> <span class="fu"><a href="conformeR.html">conformeR</a></span><span class="op">(</span><span class="va">sce_reduced</span>,</span></span>
+<span class="r-in"><span>    design_lemur <span class="op">=</span> <span class="op">~</span> <span class="va">patient_id</span> <span class="op">+</span> <span class="va">condition</span>,</span></span>
+<span class="r-in"><span>    contrast_column <span class="op">=</span> <span class="st">"condition"</span>,</span></span>
+<span class="r-in"><span>    n_embedding <span class="op">=</span> <span class="fl">15</span>,</span></span>
+<span class="r-in"><span>    genes_of_interest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"ENSG00000163453"</span>,</span></span>
+<span class="r-in"><span>        <span class="st">"ENSG00000163734"</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Selecting cells that are considered close with 'harmony'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Storing 20% of the data (600 cells) as test data.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Regress out global effects using linear method.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find base point for differential embedding</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit differential embedding model</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Initial error: 4.54e+05</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ---Fit Grassmann linear model</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Final error: 1.39e+05</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find optimal neighborhood using zscore.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Validate neighborhoods using test data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Form pseudobulk (summing counts)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculate size factors for each gene</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit edgeR model on pseudobulk data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit diff-in-diff effect</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find optimal neighborhood using zscore.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Validate neighborhoods using test data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Form pseudobulk (summing counts)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculate size factors for each gene</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit edgeR model on pseudobulk data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit diff-in-diff effect</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find optimal neighborhood using zscore.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Validate neighborhoods using test data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Form pseudobulk (summing counts)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculate size factors for each gene</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit edgeR model on pseudobulk data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit diff-in-diff effect</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
+<span class="r-in"><span><span class="fu">plotter_conformal_selection</span><span class="op">(</span><span class="va">out_conformer</span>,</span></span>
+<span class="r-in"><span>    genes_to_plot <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"ENSG00000163453"</span>,</span></span>
+<span class="r-in"><span>        <span class="st">"ENSG00000163734"</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="plotter_conformal_selection-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>
@@ -93,7 +151,7 @@ gene panels (instead of one legend per gene).</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Justine Leclerc, Christof Seiler.</p>
+  <p></p><p>Developed by Justine Leclerc, Christof Seiler, Digital Society Initiative - University of Zurich.</p>
 </div>
 
 <div class="pkgdown">

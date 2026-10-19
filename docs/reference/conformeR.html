@@ -20,7 +20,7 @@ covariates specified in the LEMUR design formula."><!-- mathjax --><script src="
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">conformeR</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.0.0</span>
       </span>
     </div>
 
@@ -35,10 +35,19 @@ covariates specified in the LEMUR design formula."><!-- mathjax --><script src="
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/conformeR-introduction.html">conformeR-introduction</a>
+      <a href="../articles/conformeR-introduction.html">Getting Started with conformeR</a>
     </li>
   </ul></li>
-      </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
+      </ul><ul class="nav navbar-nav navbar-right"><li>
+  <a href="https://github.com/juslecl/conformeR/" class="external-link">
+    <span class="fab fa-github fa-lg"></span>
+
+  </a>
+</li>
+      </ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
 
@@ -48,7 +57,7 @@ covariates specified in the LEMUR design formula."><!-- mathjax --><script src="
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>LEMUR analysis for neighborhoods on predicted gene differential expression with conformal methods</h1>
-
+    <small class="dont-index">Source: <a href="https://github.com/juslecl/conformeR/blob/HEAD/R/conformeR.R" class="external-link"><code>R/conformeR.R</code></a></small>
     <div class="hidden name"><code>conformeR.Rd</code></div>
     </div>
 
@@ -96,6 +105,11 @@ expression data.</p></dd>
 differential-expression testing in LEMUR.</p></dd>
 
 
+<dt id="arg-contrast-levels">contrast_levels<a class="anchor" aria-label="anchor" href="#arg-contrast-levels"></a></dt>
+<dd><p>when <code>contrast_column</code> has more than two levels,
+specify which two are tested again each other.</p></dd>
+
+
 <dt id="arg-n-embedding">n_embedding<a class="anchor" aria-label="anchor" href="#arg-n-embedding"></a></dt>
 <dd><p>Number of dimensions in the LEMUR embedding.</p></dd>
 
@@ -122,7 +136,8 @@ differential-expression testing in LEMUR.</p></dd>
 
 <dt id="arg-genes-of-interest">genes_of_interest<a class="anchor" aria-label="anchor" href="#arg-genes-of-interest"></a></dt>
 <dd><p>Character vector containing the names of genes
-to include in the conformal analysis.They need to correspond to the row names of the sce.</p></dd>
+to include in the conformal analysis.They need to correspond to the
+row names of the sce.</p></dd>
 
 
 <dt id="arg-what">what<a class="anchor" aria-label="anchor" href="#arg-what"></a></dt>
@@ -135,15 +150,6 @@ to include in the conformal analysis.They need to correspond to the row names of
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical indicating whether to display progress information.</p></dd>
-
-
-<dt id="arg-constrast-levels">constrast_levels<a class="anchor" aria-label="anchor" href="#arg-constrast-levels"></a></dt>
-<dd><p>when <code>contrast_column</code> has more than two levels, specify which two are tested again each other.</p></dd>
-
-
-<dt id="arg-eps-corruption">eps_corruption<a class="anchor" aria-label="anchor" href="#arg-eps-corruption"></a></dt>
-<dd><p>Label corruption level estimate used in the conformal
-procedures (vector of length length(genes_of_interest)).</p></dd>
 
 </dl></div>
     <div id="value">
@@ -168,6 +174,79 @@ for the genes of interest.</p></dd>
 interest. Genes are processed in chunks to allow parallel computation.</p>
     </div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"sce_reduced"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">out_conformer</span> <span class="op">&lt;-</span> <span class="fu">conformeR</span><span class="op">(</span><span class="va">sce_reduced</span>,</span></span>
+<span class="r-in"><span>    design_lemur <span class="op">=</span> <span class="op">~</span> <span class="va">patient_id</span> <span class="op">+</span> <span class="va">condition</span>,</span></span>
+<span class="r-in"><span>    contrast_column <span class="op">=</span> <span class="st">"condition"</span>,</span></span>
+<span class="r-in"><span>    n_embedding <span class="op">=</span> <span class="fl">15</span>,</span></span>
+<span class="r-in"><span>    genes_of_interest <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"ENSG00000163453"</span>,</span></span>
+<span class="r-in"><span>        <span class="st">"ENSG00000163734"</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required namespace: SingleCellExperiment</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Selecting cells that are considered close with 'harmony'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Storing 20% of the data (600 cells) as test data.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Regress out global effects using linear method.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find base point for differential embedding</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit differential embedding model</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Initial error: 4.6e+05</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ---Fit Grassmann linear model</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Final error: 1.41e+05</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Converged</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find optimal neighborhood using zscore.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Validate neighborhoods using test data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Form pseudobulk (summing counts)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculate size factors for each gene</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit edgeR model on pseudobulk data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit diff-in-diff effect</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find optimal neighborhood using zscore.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Validate neighborhoods using test data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Form pseudobulk (summing counts)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculate size factors for each gene</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit edgeR model on pseudobulk data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit diff-in-diff effect</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Find optimal neighborhood using zscore.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Validate neighborhoods using test data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Form pseudobulk (summing counts)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculate size factors for each gene</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit edgeR model on pseudobulk data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Fit diff-in-diff effect</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
+<span class="r-in"><span><span class="va">out_conformer</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $fit_lemur</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> class: lemur_fit </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> dim: 2 1500 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> metadata(10): n_embedding design ... row_mask contrast</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> assays(3): counts logcounts DE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rownames(2): ENSG00000163453 ENSG00000163734</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rowData names(2): gid gene</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colnames(1500): cell 6786 cell 27448 ... cell 70684 cell 5305</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> colData names(3): cell_type condition patient_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> reducedDimNames(4): linearFit embedding fit_umap fit_al_umap</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mainExpName: NULL</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> altExpNames(0):</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $nei_lemur</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              name neighborhood n_cells sel_statistic      pval  adj_pval</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 ENSG00000163453 cell 678....    1005     -41.78641 0.5731403 0.9745425</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 ENSG00000163734 cell 678....    1040      42.29903 0.3767652 0.8970601</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   f_statistic df1 df2       lfc  did_pval did_adj_pval    did_lfc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   0.3195567   1 100 -0.826774 0.7912434    0.9999751 -0.5371381</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   0.7882336   1 100  1.373867 0.4242489    0.9999751  2.3233030</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $conf_results</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 6</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   gene            inside_cs   inside_cc     outside_cc  conf_quantile cp_alpha</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ENSG00000163453 <span style="color: #949494;">&lt;chr [174]&gt;</span> <span style="color: #949494;">&lt;chr [1,103]&gt;</span> <span style="color: #949494;">&lt;chr [342]&gt;</span>         0.423     0.05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> ENSG00000163734 <span style="color: #949494;">&lt;chr [0]&gt;</span>   <span style="color: #949494;">&lt;chr [973]&gt;</span>   <span style="color: #949494;">&lt;chr [442]&gt;</span>         0.261     0.05</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>
@@ -176,7 +255,7 @@ interest. Genes are processed in chunks to allow parallel computation.</p>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Justine Leclerc, Christof Seiler.</p>
+  <p></p><p>Developed by Justine Leclerc, Christof Seiler, Digital Society Initiative - University of Zurich.</p>
 </div>
 
 <div class="pkgdown">
