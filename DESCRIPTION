@@ -1,7 +1,7 @@
 Package: conformeR
 Type: Package
 Title: Conformalized differential expression analysis of multi-condition single-cell data
-Version: 1.0.0
+Version: 0.99.1
 Authors@R: c(person(given="Justine", family="Leclerc", email="justine.leclerc@usz.ch", role = c("cre", "aut"),
            comment = c(ORCID = "0009-0002-5667-0778")),
     person("Christof", "Seiler", email="christof.seiler@usz.ch", role="aut",

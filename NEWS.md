@@ -1,4 +1,4 @@
-# conformeR 1.0.0
+# conformeR 0.99.1
 
 NEW FEATURES
 
