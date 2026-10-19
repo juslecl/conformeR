@@ -54,35 +54,53 @@
 #'
 #' @export
 
-conformeR <- function(sce, design_lemur = ~1, contrast_column,
-    contrast_levels = NULL, n_embedding = 60,
-    use_assay = "logcounts", test_fraction_lemur = 0.2,
-    cp_train_frac = 0.5, cp_cal_frac = 0.25,
-    cp_alpha = 0.05, genes_of_interest,
-    what = c("conf_selection", "conf_clustering"),
-    n_cores = 1, verbose = TRUE) {
-    out <- lemur_wf(
-        sce, design_lemur, contrast_column, contrast_levels, n_embedding,
-        use_assay, test_fraction_lemur, cp_train_frac, cp_cal_frac,
+conformeR <- function(
+    sce, design_lemur = ~1, contrast_column, contrast_levels = NULL,
+    n_embedding = 60, use_assay = "logcounts", test_fraction_lemur = 0.2,
+    cp_train_frac = 0.5, cp_cal_frac = 0.25, cp_alpha = 0.05,
+    genes_of_interest, what = c("conf_selection", "conf_clustering"),
+    n_cores = 1, verbose = TRUE
+) {
+    check_arg(
+        inherits(sce, "SingleCellExperiment"),
+        "`sce` must be a SingleCellExperiment."
+    )
+    check_arg(
+        inherits(design_lemur, "formula"), "`design_lemur` must be a formula."
+    )
+    check_arg(
+        is.character(contrast_column) && length(contrast_column) == 1L,
+        "`contrast_column` must be a single character string."
+    )
+    check_arg(
+        is.character(genes_of_interest) && length(genes_of_interest) > 0 &&
+        all(genes_of_interest %in% rownames(sce)),
+        "`genes_of_interest` must be a non-empty character vector
+        with all genes present in `rownames(sce)`."
+    )
+    check_arg(
+        length(what) > 0 &&
+        all(what %in% c("conf_selection", "conf_clustering")),
+        "`what` must contain `conf_selection` and/or `conf_clustering`."
+    )
+    out <- lemur_wf(sce, design_lemur, contrast_column, contrast_levels,
+        n_embedding, use_assay, test_fraction_lemur, cp_train_frac, cp_cal_frac,
         verbose = verbose
     )
     chunks <- split(
         genes_of_interest, ceiling(seq_along(genes_of_interest) / 5)
     )
-    chunk_results <- BiocParallel::bplapply(
-        chunks,
+    chunk_results <- BiocParallel::bplapply(chunks,
         \(genes) conformal_lemur(
             out$pred_train[genes, ], out$pred_cal[genes, ],
             out$pred_test[genes, ],
             .nei_as_logical(out$nei_train, genes, colnames(out$pred_train)),
             .nei_as_logical(out$nei_cal, genes, colnames(out$pred_cal)),
             what, cp_alpha
-        ),
-        BPPARAM = BiocParallel::MulticoreParam(workers = n_cores)
+        ), BPPARAM = BiocParallel::MulticoreParam(workers = n_cores)
     )
     list(
         fit_lemur = out$pred_test[genes_of_interest, ],
         nei_lemur = dplyr::filter(out$nei_test, name %in% genes_of_interest),
-        conf_results = dplyr::bind_rows(chunk_results)
-    )
+        conf_results = dplyr::bind_rows(chunk_results))
 }

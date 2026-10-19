@@ -204,3 +204,7 @@ lemur_wf <- function(sce, design_lemur, contrast_column, contrast_levels,
     }
     dplyr::mutate(out, cp_alpha = alpha)
 }
+
+#' Check argument's validity passed to conformeR
+#' @noRd
+check_arg <- function(ok, msg) if (!ok) stop(msg, call. = FALSE)

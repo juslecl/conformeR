@@ -49,7 +49,7 @@
 }
 
 #' Truncate a numeric value to a specified number of significant digits
-#' Source:
+#' Inspired from:
 #' https://github.com/const-ae/lemur-Paper/blob/master/notebooks/util.R
 #' @noRd
 
@@ -59,7 +59,7 @@
 }
 
 #' Create a diverging colour scale for differential expression
-#' Source:
+#' Inspired from:
 #' https://github.com/const-ae/lemur-Paper/blob/master/notebooks/util.R
 #' @noRd
 .scale_color_de_gradient <- function(abs_max,

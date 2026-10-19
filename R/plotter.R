@@ -36,6 +36,17 @@
 #' @export
 
 plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
+    check_arg(
+        all(genes_to_plot %in% conformer_output$conf_results$gene),
+        "`genes_to_plot` need to be in `conformer_output$conf_results$gene`."
+    )
+    check_arg(
+        identical(
+            names(conformer_output),
+            c("fit_lemur", "nei_lemur", "conf_results")
+        ),
+        "`conformer_output` needs to be output of `conformeR::conformeR()`."
+    )
     prep <- .prepare_conformal_data(
         conformer_output, genes_to_plot,
         "inside_cs"
@@ -109,6 +120,17 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
 #'
 #' @export
 plotter_conformal_clustering <- function(conformer_output, genes_to_plot) {
+    check_arg(
+        all(genes_to_plot %in% conformer_output$conf_results$gene),
+        "`genes_to_plot` need to be in `conformer_output$conf_results$gene`."
+    )
+    check_arg(
+        identical(
+            names(conformer_output),
+            c("fit_lemur", "nei_lemur", "conf_results")
+        ),
+        "`conformer_output` needs to be output of `conformeR::conformeR()`."
+    )
     prep <- .prepare_conformal_data(
         conformer_output, genes_to_plot,
         c("inside_cc", "outside_cc")

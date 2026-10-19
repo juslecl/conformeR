@@ -19,6 +19,9 @@ data("sce_reduced")
 \description{
 A small SingleCellExperiment object used to demonstrate
 the conformeR workflow.
+Random subset from a real dataset (see source). Code for reproducing from
+original dataset at:
+\url{https://github.com/juslecl/conformeR-paper/tree/main/data_preparation}
 3k cells and 100 genes for 2 patients, 2 conditions, 3 cell-types.
 }
 \details{

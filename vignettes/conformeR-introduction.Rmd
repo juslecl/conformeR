@@ -1,11 +1,15 @@
 ---
 title: "Getting Started with conformeR"
 author: "Justine Leclerc and Christof Seiler"
-output: rmarkdown::html_vignette
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
 vignette: >
-  %\VignetteIndexEntry{Getting Started with conformeR}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+ %\VignetteIndexEntry{Getting Started with conformeR}
+ %\VignetteEngine{knitr::rmarkdown}
+ %\VignetteEncoding{UTF-8}
 ---
 
 ```{r options, include = FALSE}
@@ -34,6 +38,8 @@ margin: 0.3em 0;
 }
 ```
 
+# Introduction
+
 ## Overview
 
 LEMUR fits a low-dimensional embedding and assigns cells to neighborhoods 
@@ -52,9 +58,9 @@ It provides two complementary views of that uncertainty:
 
 - **Conformal selection** asks, for a given gene, *which cells can we
 confidently say belong to the affected neighborhood?* It returns a
-data-driven subset of cells with a guaranteed bound on the
+subset of neighborhood cells with a guaranteed bound on the
 proportion of false inclusions.
-- **Conformal clustering** asks the finer-grained question, *for each
+- **Conformal clustering** asks, *for each
 cell, how uncertain are we about its neighborhood assignment?* It
 returns a prediction *set* of plausible neighborhoods per cell,
 which can contain zero, one, or several labels.
@@ -66,40 +72,16 @@ survive resampling. `conformeR` turns that single assignment into a
 statement with a formal, finite-sample coverage guarantee.</p>
 </div>
 
-### A caveat: the guarantee assumes true labels
+# Installation
+Install conformeR running the following commands.
+```{r installation, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
 
-The coverage guarantees behind conformal prediction are proven under
-the assumption that the training and calibration sets carry the
-*true* neighborhood label for each cell. That assumption is exactly
-what motivates reaching for conformal prediction here in the first
-place — but it is also never satisfied in practice: we do not observe
-the true neighborhood membership of any cell. What we have instead is
-LEMUR's own predicted neighborhood assignment, which we use as a
-proxy label for both training and calibration. That proxy is a
-*noisy* version of the true label, and the two conformal procedures
-degrade differently under that noise:
+BiocManager::install("juslecl/conformeR")
+```
 
-- **Conformal clustering** stays conservative. Calibrating against a
-noisy label inflates the non-conformity scores, so the procedure
-compensates by returning more prediction sets of size 2 — i.e. it
-more often declines to commit to a neighborhood — rather than
-silently under-covering. The formal guarantee effectively still
-holds, at the cost of more "I don't know" answers.
-- **Conformal selection** has no such built-in safety valve. Its
-validity relies directly on LEMUR's predicted neighborhoods not
-being *too* wrong: if LEMUR's assignment is systematically biased
-rather than just noisy, the selected neighborhood inherits that
-bias. In practice this means conformal selection results are only
-as trustworthy as the underlying LEMUR fit.
-
-<div class="callout">
-<p>**Practical takeaway.** Read a size-2 prediction set from conformal
-clustering as the procedure protecting itself against label noise,
-not as evidence that a cell has no meaningful neighborhood. Read a
-conformal selection result with an eye on LEMUR fit quality first —
-e.g. convergence diagnostics, embedding dimensionality — since that
-fit stands in for ground truth throughout.</p>
-</div>
 
 ```{r setup and theme}
 library(conformeR)
@@ -124,6 +106,7 @@ conformer_palette <- c(
 )
 ```
 
+# Use-case of conformeR
 ## Example dataset
 
 This vignette runs `conformeR` on a reduced version of the single-cell
@@ -139,8 +122,6 @@ sce_reduced
 rownames(sce_reduced) <- rowData(sce_reduced)$gene
 head(colData(sce_reduced))
 ```
-
-## Selecting genes of interest
 
 We restrict the analysis to three genes with distinct expected
 behavior, to illustrate a range of neighborhood sizes and
@@ -170,9 +151,9 @@ layers to a gene subset; LEMUR itself is still fit genome-wide.
 `"conf_clustering"`, or both.
 
 By default the target coverage is `cp_alpha`, and the data are split
-50% training / 50% calibration+test, with the calibration set taking
-25 percentage points of the total (`cp_train_frac` and `cp_cal_frac`
-override these proportions).
+50% training / 50% test, with the calibration set taking
+25% of the training set (`cp_train_frac` and `cp_cal_frac`
+set these proportions).
 
 ```{r run-conformer}
 set.seed(2002)
@@ -187,12 +168,12 @@ res <- conformeR(
 )
 ```
 
-## Conformal selection: how big is the affected neighborhood?
+## Conformal selection
 
 For each gene, conformal selection returns the set of cells flagged
 as belonging to the neighborhood affected by `condition`, at the
 target coverage level. The table below reports both the raw
-neighborhood size and its share of all cells in the fitted embedding.
+neighborhood size and its share of all cells in the test set.
 
 ```{r selection-summary}
 fit <- res$fit_lemur
@@ -219,17 +200,12 @@ kable(selection_summary,
 )
 ```
 
-A larger `% of cells` means the gene's condition effect is detected
-across a broader swath of the embedding; a small, tight neighborhood
-points to a more localized effect.
-
-## Conformal clustering: how confident is each cell's assignment?
+## Conformal clustering
 
 Conformal clustering instead reports, per cell, a *prediction set*:
 the neighborhoods that cell could plausibly belong to at the target
-coverage. A prediction set of size zero means the procedure could not
-confidently assign that cell to any neighborhood; larger sets reflect
-more ambiguous cells.
+coverage. A prediction set of size zero or two means the procedure could not
+confidently assign that cell to any neighborhood. It is ambiguous.
 
 ```{r clustering-summary}
 clustering_summary <- cp_out |>
@@ -248,17 +224,6 @@ kable(clustering_summary,
         "Conformal clustering: prediction set composition per gene"
 )
 ```
-
-Reading this table alongside the selection table above shows where
-the two procedures agree (a gene with a large, confident
-neighborhood in both) and where they diverge (a gene with a sizeable
-selected neighborhood but many size-2 or ambiguous cells under
-clustering, which flags instability worth a closer look). Recall from
-the caveat above that a high count of size-2 sets is, by design, the
-clustering procedure's response to calibrating against LEMUR's noisy
-neighborhood labels rather than the true ones — so treat it as a
-built-in conservatism, not necessarily a sign that something is wrong
-with the gene's effect.
 
 ## Visualizing results on the LEMUR embedding
 
@@ -284,7 +249,7 @@ hard assignment, making it easy to spot the boundary regions where
 neighborhood membership is genuinely uncertain versus the core
 regions where every resampling agrees.
 
-## Session info
+# Session info
 
 ```{r session-info}
 sessionInfo()
