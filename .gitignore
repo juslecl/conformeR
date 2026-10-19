@@ -7,3 +7,6 @@
 inst/doc
 /doc/
 /Meta/
+*.Rproj
+.Rproj.user/
+*.BiocCheck/
