@@ -10,12 +10,18 @@ altering the underlying model.
 
 ## Installation
 
-`conformeR` is not yet on CRAN or Bioconductor. Install the development version 
-running:
-```r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+`conformeR` is available from Bioconductor:
 
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+BiocManager::install("conformeR")
+```
+
+The development version can be installed from GitHub:
+
+```r
 BiocManager::install("juslecl/conformeR")
 ```
 

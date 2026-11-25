@@ -72,16 +72,16 @@ survive resampling. `conformeR` turns that single assignment into a
 statement with a formal, finite-sample coverage guarantee.</p>
 </div>
 
-# Installation
-Install conformeR running the following commands.
-```{r installation, eval=FALSE}
+## Installation
+
+`conformeR` is available from Bioconductor:
+
+```{r installation}
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
 }
-
-BiocManager::install("juslecl/conformeR")
+BiocManager::install("conformeR")
 ```
-
 
 ```{r setup and theme}
 library(conformeR)
@@ -150,7 +150,7 @@ layers to a gene subset; LEMUR itself is still fit genome-wide.
 - `what` — which conformal procedure(s) to run: `"conf_selection"`,
 `"conf_clustering"`, or both.
 
-By default the target coverage is `cp_alpha`, and the data are split
+By default the miscoverage level is `cp_alpha`, and the data are split
 50% training / 50% test, with the calibration set taking
 25% of the training set (`cp_train_frac` and `cp_cal_frac`
 set these proportions).
