@@ -80,7 +80,7 @@ statement with a formal, finite-sample coverage guarantee.</p>
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
 }
-BiocManager::install("conformeR")
+#BiocManager::install("conformeR")
 ```
 
 ```{r setup and theme}
