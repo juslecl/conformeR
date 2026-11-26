@@ -3,7 +3,20 @@
 
 train_classifier <- function(pred_train, nei_train, gene_name) {
     idx <- which(nei_train$name == gene_name)
+    check_arg(
+        length(idx) == 1L,
+        sprintf("Gene '%s' must appear exactly once in the training neighborhoods.", gene_name)
+    )
     y <- as.factor(as.numeric(nei_train$neighborhood[[idx]]))
+    check_arg(
+        nlevels(y) == 2L,
+        sprintf(
+            paste0(
+                "The LEMUR training neighborhood of gene '%s' contains all ",
+                "or none of the training cells; a classifier cannot be trained."
+            ), gene_name
+        )
+    )
     expr_de <- SummarizedExperiment::assay(pred_train, "DE")[gene_name, ]
     embedding <- t(pred_train$embedding)
     colnames(embedding) <- paste0("dim", seq_len(ncol(embedding)))
@@ -70,6 +83,8 @@ predict_classifier <- function(trained_classifier, pred_sce, gene_name) {
 #' Fits LEMUR standard workflow to the data.
 #' Splits data for training, calibration and test sets.
 #' Finds LEMUR neighborhood for each subset.
+#' Returns the full fit, the contrast, the three subsets (`pred_*`) and their
+#' neighborhoods (`nei_*`).
 #' @noRd
 
 lemur_wf <- function(sce, design_lemur, contrast_column, contrast_levels,
@@ -100,6 +115,7 @@ lemur_wf <- function(sce, design_lemur, contrast_column, contrast_levels,
         test_method = "edgeR", verbose = verbose
     ))
     c(
+        list(fit = fit, contrast = contrast_expr),
         stats::setNames(preds, paste0("pred_", names(preds))),
         stats::setNames(neis, paste0("nei_", names(neis)))
     )
@@ -152,7 +168,9 @@ lemur_wf <- function(sce, design_lemur, contrast_column, contrast_levels,
 #' @noRd
 .conf_clustering_gene <- function(p_cal, p_test, gene, cells, n_cal, alpha) {
     s_cal <- 1 - pmax(p_cal, 1 - p_cal)
-    q <- sort(s_cal)[ceiling((n_cal + 1) * (1 - alpha))]
+    k <- ceiling((n_cal + 1) * (1 - alpha))
+    ## calibration set too small for this alpha: trivial (full) sets
+    q <- if (k > n_cal) Inf else sort(s_cal)[k]
     data.frame(
         gene = gene, cell = cells,
         inside_cc = 1 - p_test <= q, outside_cc = p_test <= q,
@@ -205,6 +223,3 @@ lemur_wf <- function(sce, design_lemur, contrast_column, contrast_levels,
     dplyr::mutate(out, cp_alpha = alpha)
 }
 
-#' Check argument's validity passed to conformeR
-#' @noRd
-check_arg <- function(ok, msg) if (!ok) stop(msg, call. = FALSE)

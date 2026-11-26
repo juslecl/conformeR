@@ -123,54 +123,39 @@
         )
 }
 
-#' Neighborhood membership to long format
+#' Long-format data (one row per test cell and gene) for the plots, built
+#' from the SingleCellExperiment returned by conformeR()
+#' @param conformer_output output of `conformeR()`
+#' @param genes genes to plot
+#' @param conf_assays named character vector, names = column names used by
+#'   the plotting code, values = assay names of the "conformeR" altExp
 #' @noRd
-.membership_long <- function(df, id_col, list_cols, genes, cells) {
-    df |>
-        dplyr::filter(.data[[id_col]] %in% genes) |>
-        dplyr::mutate(dplyr::across(
-            dplyr::all_of(list_cols),
-            \(col) purrr::map(col, \(x) cells %in% x)
-        )) |>
-        dplyr::select(dplyr::all_of(c(id_col, list_cols))) |>
-        tidyr::unnest(dplyr::all_of(list_cols)) |>
-        dplyr::mutate(cell = rep(cells, length(genes)))
-}
-
-#' LEMUR-Fit, neighborhoods and conformal output get-together for plot
-#' @noRd
-.prepare_conformal_data <- function(conformer_output, genes, conf_cols) {
-    fit <- conformer_output$fit_lemur
-    fit_small <- fit[genes, ]
-    cells <- colnames(fit)
-    nei <- .membership_long(
-        conformer_output$nei_lemur, "name",
-        "neighborhood", genes, cells
+.prepare_conformal_data <- function(conformer_output, genes, conf_assays) {
+    test <- which(conformer_output$conformeR_split == "test")
+    ae <- SingleCellExperiment::altExp(conformer_output, "conformeR")
+    ae <- ae[genes, test]
+    cells <- colnames(conformer_output)[test]
+    umap_fit <- as.data.frame(SingleCellExperiment::reducedDim(
+        conformer_output, "LEMUR_aligned_UMAP"
+    )[test, , drop = FALSE])
+    rownames(umap_fit) <- NULL
+    ## genes x cells assay -> vector ordered gene by gene
+    as_long <- \(a) as.vector(t(SummarizedExperiment::assay(ae, a)))
+    idx <- rep(seq_along(cells), times = length(genes))
+    umap_long <- umap_fit[idx, , drop = FALSE]
+    rownames(umap_long) <- NULL
+    data <- tibble::tibble(
+        cell = cells[idx],
+        gene = factor(rep(genes, each = length(cells)), levels = genes),
+        de = as_long("DE"),
+        neighborhood = as_long("lemur_neighborhood"),
+        umap = umap_long
     )
-    conf <- .membership_long(
-        conformer_output$conf_results, "gene",
-        conf_cols, genes, cells
-    ) |>
-        dplyr::left_join(nei, by = c("cell", "gene" = "name"))
-    umap_fit <- SingleCellExperiment::reducedDim(fit_small, "fit_al_umap") |>
-        as.data.frame()
-    data <- tibble::as_tibble(SingleCellExperiment::colData(fit_small),
-        rownames = "cell"
-    ) |>
-        dplyr::mutate(umap = umap_fit, de = tibble::as_tibble(
-            t(SummarizedExperiment::assay(fit_small, "DE"))
-        )) |>
-        tidyr::unnest(de, names_sep = "-") |>
-        tidyr::pivot_longer(tidyselect::starts_with("de-"),
-            names_sep = "-",
-            values_to = "de", names_to = c(NA, "gene")
-        ) |>
-        dplyr::mutate(gene = factor(gene)) |>
-        dplyr::left_join(conf, by = c("gene", "cell"))
+    for (col in names(conf_assays)) data[[col]] <- as_long(conf_assays[[col]])
     list(data = data, umap_fit = umap_fit)
 }
 
-#' Onw panel per gene; `extra(d)` for additional contours
+#' One panel per gene; `extra(d)` for additional contours
 #' @noRd
 .gene_panels <- function(data, umap_fit, in_nei, alpha_fun, extra) {
     dplyr::group_by(data, gene) |>

@@ -28,7 +28,7 @@
 #' \describe{
 #' \item{Conformal selection}{For each gene, selects the test cells that
 #' confidently belong to the LEMUR neighborhood. Conformal p-values are
-#' adjusted with the Benjamini-Hochberg procedure so that the false
+#' combined with the Benjamini-Hochberg procedure so that the false
 #' discovery rate among selected cells is controlled at \code{cp_alpha}.}
 #' \item{Conformal clustering}{For each gene and test cell, returns a
 #' prediction set of neighborhood labels (inside / outside) that contains

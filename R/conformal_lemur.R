@@ -9,19 +9,24 @@
 #' gene- and cell-specific conformal p-values and applies the
 #' Benjamini-Hochberg procedure to select cells.
 #'
-#' @param pred_train A training \code{SingleCellExperiment} object.
+#' @param pred_train A training \code{SingleCellExperiment} object (LEMUR
+#'   fit subset) with a \code{"DE"} assay and a LEMUR embedding.
 #' @param pred_cal A calibration \code{SingleCellExperiment} object.
 #' @param pred_test A test \code{SingleCellExperiment} object.
 #' @param nei_train A data frame containing the LEMUR neighborhoods for the
 #'   training data. Must contain a \code{name} column identifying the genes
-#'   and a \code{neighborhood} column containing the corresponding cell sets.
+#'   and a \code{neighborhood} column containing, for each gene, a logical
+#'   vector over the training cells.
 #' @param nei_cal A data frame containing the LEMUR neighborhoods for the
 #'   calibration data. Must contain a \code{name} column identifying the genes
-#'   and a \code{neighborhood} column containing the corresponding cell sets.
+#'   and a \code{neighborhood} column containing, for each gene, a logical
+#'   vector over the calibration cells.
 #' @param what Character vector specifying which conformal procedures to run.
 #'   Can contain \code{"conf_clustering"}, \code{"conf_selection"}, or both.
-#' @param alpha Numeric value specifying the target miscoverage level.
-#'   Also used as the significance level for the Benjamini-Hochberg procedure.
+#' @param alpha Error level in (0, 1): miscoverage level of the conformal
+#'   clustering prediction sets (coverage \eqn{1 - \alpha}) and target false
+#'   discovery rate of the Benjamini-Hochberg procedure used by conformal
+#'   selection.
 #' @param return_cq logical specifying whether score quantile
 #' for conformal clustering should be returned
 #' (for article simulations only)
@@ -35,7 +40,26 @@
 
 conformal_lemur <- function(pred_train, pred_cal, pred_test, nei_train,
     nei_cal, what, alpha, return_cq = FALSE) {
+    .check_pred_sce(pred_train, "pred_train")
+    .check_pred_sce(pred_cal, "pred_cal")
+    .check_pred_sce(pred_test, "pred_test")
+    .check_nei(nei_train, "nei_train", ncol(pred_train))
+    .check_nei(nei_cal, "nei_cal", ncol(pred_cal))
+    .check_what(what)
+    check_arg(.is_number_in(alpha, 0, 1), "`alpha` must be a number in (0, 1).")
+    check_arg(.is_flag(return_cq), "`return_cq` must be TRUE or FALSE.")
     genes <- nei_train$name
+    check_arg(
+        length(genes) > 0 && !anyDuplicated(genes) &&
+            setequal(genes, nei_cal$name) &&
+            all(genes %in% rownames(pred_train)) &&
+            all(genes %in% rownames(pred_cal)) &&
+            all(genes %in% rownames(pred_test)),
+        paste0(
+            "`nei_train` and `nei_cal` must describe the same unique genes, ",
+            "all present in `pred_train`, `pred_cal` and `pred_test`."
+        )
+    )
     softies <- stats::setNames(
         lapply(genes, \(g) train_classifier(pred_train, nei_train, g)), genes
     )

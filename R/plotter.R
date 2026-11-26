@@ -5,9 +5,11 @@
 #' cells are shown according to their LEMUR neighborhood membership and
 #' conformal selection status (density contours).
 #'
-#' @param conformer_output A list returned by \code{conformeR},
-#' containing the LEMUR fit, LEMUR neighborhoods, and conformal results.
-#' @param genes_to_plot Character vector specifying the genes to plot.
+#' @param conformer_output A \code{SingleCellExperiment} returned by
+#' \code{\link{conformeR}} with \code{"conf_selection"} in \code{what}.
+#' Only the test cells (\code{conformeR_split == "test"}) are plotted.
+#' @param genes_to_plot Character vector specifying the genes to plot. They
+#' must be among the \code{genes_of_interest} passed to \code{conformeR()}.
 #'
 #' @return A single combined \code{ggplot}/\code{cowplot} object showing
 #' differential expression and conformal selection results for all
@@ -17,7 +19,7 @@
 #'
 #' @examples
 #' data("sce_reduced")
-#' out_conformer <- conformeR(sce_reduced,
+#' sce_conformer <- conformeR(sce_reduced,
 #'     design_lemur = ~ patient_id + condition,
 #'     contrast_column = "condition",
 #'     n_embedding = 15,
@@ -26,7 +28,7 @@
 #'         "ENSG00000163734"
 #'     )
 #' )
-#' plotter_conformal_selection(out_conformer,
+#' plotter_conformal_selection(sce_conformer,
 #'     genes_to_plot = c(
 #'         "ENSG00000163453",
 #'         "ENSG00000163734"
@@ -36,20 +38,10 @@
 #' @export
 
 plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
-    check_arg(
-        all(genes_to_plot %in% conformer_output$conf_results$gene),
-        "`genes_to_plot` need to be in `conformer_output$conf_results$gene`."
-    )
-    check_arg(
-        identical(
-            names(conformer_output),
-            c("fit_lemur", "nei_lemur", "conf_results")
-        ),
-        "`conformer_output` needs to be output of `conformeR::conformeR()`."
-    )
+    .check_conformer_output(conformer_output, genes_to_plot, "conf_selection")
     prep <- .prepare_conformal_data(
         conformer_output, genes_to_plot,
-        "inside_cs"
+        c(inside_cs = "conf_selection")
     )
     color <- c("Conformal selection" = "forestgreen")
     alpha <- \(de, m) scales::rescale(abs(de), to = c(0.05, 1))
@@ -90,9 +82,11 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
 #' "Inside" / "Outside", with one shared "Set size" legend for the
 #' black/grey contours.
 #'
-#' @param conformer_output A list returned by \code{run_replication},
-#' containing the LEMUR fit, LEMUR neighborhoods, and conformal results.
-#' @param genes_to_plot Character vector specifying the genes to plot.
+#' @param conformer_output A \code{SingleCellExperiment} returned by
+#' \code{\link{conformeR}} with \code{"conf_clustering"} in \code{what}.
+#' Only the test cells (\code{conformeR_split == "test"}) are plotted.
+#' @param genes_to_plot Character vector specifying the genes to plot. They
+#' must be among the \code{genes_of_interest} passed to \code{conformeR()}.
 #'
 #' @return A single combined \code{ggplot}/\code{cowplot} object: the
 #' "Inside" panel row stacked above the "Outside" panel row, each row
@@ -102,7 +96,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
 #'
 #' @examples
 #' data("sce_reduced")
-#' out_conformer <- conformeR(sce_reduced,
+#' sce_conformer <- conformeR(sce_reduced,
 #'     design_lemur = ~ patient_id + condition,
 #'     contrast_column = "condition",
 #'     n_embedding = 15,
@@ -111,7 +105,7 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
 #'         "ENSG00000163734"
 #'     )
 #' )
-#' plotter_conformal_clustering(out_conformer,
+#' plotter_conformal_clustering(sce_conformer,
 #'     genes_to_plot = c(
 #'         "ENSG00000163453",
 #'         "ENSG00000163734"
@@ -120,20 +114,16 @@ plotter_conformal_selection <- function(conformer_output, genes_to_plot) {
 #'
 #' @export
 plotter_conformal_clustering <- function(conformer_output, genes_to_plot) {
-    check_arg(
-        all(genes_to_plot %in% conformer_output$conf_results$gene),
-        "`genes_to_plot` need to be in `conformer_output$conf_results$gene`."
-    )
-    check_arg(
-        identical(
-            names(conformer_output),
-            c("fit_lemur", "nei_lemur", "conf_results")
-        ),
-        "`conformer_output` needs to be output of `conformeR::conformeR()`."
+    .check_conformer_output(
+        conformer_output, genes_to_plot,
+        c("conf_clustering_inside", "conf_clustering_outside")
     )
     prep <- .prepare_conformal_data(
         conformer_output, genes_to_plot,
-        c("inside_cc", "outside_cc")
+        c(
+            inside_cc = "conf_clustering_inside",
+            outside_cc = "conf_clustering_outside"
+        )
     )
     data <- dplyr::mutate(prep$data, set_size = inside_cc + outside_cc)
     sizes <- setdiff(sort(unique(stats::na.omit(data$set_size))), 1)

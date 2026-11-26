@@ -1,8 +1,7 @@
 #' Splitting of the original dataset using `initial_split` and balancing
 #' on covariates passed to `lemur`.
 #'
-#' @param sce SingleCellExperiment with replicate_id, obs_condition,
-#' cell_type in colData
+#' @param sce SingleCellExperiment (LEMUR fit) to split
 #' @param strat_by vector of column names in colData(sce) on which we stratify.
 #' @param size_train proportion for training set
 #' @param size_cal proportion for calibration set of training set.
@@ -11,7 +10,19 @@
 #' @noRd
 data_processing <- function(sce, strat_by,
     size_train = 0.3, size_cal = 0.25) {
-    stopifnot(methods::is(sce, "SingleCellExperiment"))
+    check_arg(
+        methods::is(sce, "SingleCellExperiment"),
+        "`sce` must be a SingleCellExperiment."
+    )
+    check_arg(
+        is.character(strat_by) && length(strat_by) > 0 &&
+            all(strat_by %in% colnames(SummarizedExperiment::colData(sce))),
+        "`strat_by` must name at least one column of colData(sce)."
+    )
+    check_arg(
+        .is_number_in(size_train, 0, 1) && .is_number_in(size_cal, 0, 1),
+        "`size_train` and `size_cal` must be numbers in (0, 1)."
+    )
     colData_df <- as.data.frame(SummarizedExperiment::colData(sce)) |>
         dplyr::mutate(
             row = dplyr::row_number(),
