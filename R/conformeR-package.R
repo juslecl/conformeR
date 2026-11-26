@@ -1,0 +1,55 @@
+#' conformeR: conformal uncertainty quantification for LEMUR
+#' differential-expression neighborhoods
+#'
+#' LEMUR (\pkg{lemur}) fits a latent embedding of multi-condition single-cell
+#' data and identifies, for each gene, a neighborhood of cells with a
+#' consistent differential-expression response. Because these neighborhoods
+#' are estimated from data, they are subject to sampling variability.
+#' \pkg{conformeR} wraps the neighborhood construction in a conformal
+#' prediction framework and provides two complementary, finite-sample valid
+#' views of that uncertainty.
+#'
+#' @section Workflow:
+#' \enumerate{
+#' \item \code{\link{conformeR}()} fits LEMUR on a
+#' \code{SingleCellExperiment}, splits the cells into training, calibration
+#' and test sets (stratified on the design covariates), trains gene-specific
+#' classifiers of neighborhood membership, and calibrates them with
+#' conformal procedures. It returns the input \code{SingleCellExperiment}
+#' enriched with the results (\code{altExp(sce, "conformeR")}, LEMUR reduced
+#' dimensions, \code{colData(sce)$conformeR_split} and
+#' \code{metadata(sce)$conformeR}).
+#' \item \code{\link{plotter_conformal_selection}()} and
+#' \code{\link{plotter_conformal_clustering}()} display the results on the
+#' aligned LEMUR UMAP.
+#' }
+#'
+#' @section Conformal procedures and \code{cp_alpha}:
+#' \describe{
+#' \item{Conformal selection}{For each gene, selects the test cells that
+#' confidently belong to the LEMUR neighborhood. Conformal p-values are
+#' adjusted with the Benjamini-Hochberg procedure so that the false
+#' discovery rate among selected cells is controlled at \code{cp_alpha}.}
+#' \item{Conformal clustering}{For each gene and test cell, returns a
+#' prediction set of neighborhood labels (inside / outside) that contains
+#' the true label with probability at least \code{1 - cp_alpha}. Sets of
+#' size one are confident assignments; empty sets or sets with both labels
+#' flag ambiguous cells.}
+#' }
+#'
+#' @section Example data:
+#' \code{\link{sce_reduced}} is a small subset of the tumor-tissue drug-response dataset of
+#' Zhao et al. (2021) used in the examples and the vignette.
+#'
+#' @references
+#' Ahlmann-Eltze, C. and Huber, W. (2025). Analysis of multi-condition
+#' single-cell data with latent embedding multivariate regression.
+#' \emph{Nature Genetics}, 57, 659--667.
+#'
+#' Jin, Y. and Candes, E. J. (2023). Selection by prediction with conformal
+#' p-values. \emph{Journal of Machine Learning Research}, 24(244), 1--41.
+#'
+#' @seealso \code{vignette("conformeR-introduction", package = "conformeR")}
+#'
+#' @keywords internal
+"_PACKAGE"
