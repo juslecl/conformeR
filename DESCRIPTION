@@ -9,7 +9,7 @@ Authors@R: c(person(given="Justine", family="Leclerc", email="justine.leclerc@us
     person("Digital Society Initiative - University of Zurich",role = "fnd",
     comment = "RAI - Reliable AI for Biomedicine"))
 Description: conformeR provides conformal prediction layers for the cell neighborhood construction step of the LEMUR framework. It implements two complementary approaches, conformal clustering and conformal selection, to quantify uncertainty in the resulting cell neighborhoods, together with tools for visualizing and interpreting the resulting uncertainty sets.
-URL: https://github.com/juslecl/conformeR
+URL: https://github.com/juslecl/conformeR, https://juslecl.github.io/conformeR/
 BugReports: https://github.com/juslecl/conformeR/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
