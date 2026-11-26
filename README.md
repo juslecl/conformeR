@@ -8,6 +8,8 @@ uncertainty quantification to LEMUR's neighborhood on predicted differential
 expression, using conformal prediction, and without
 altering the underlying model.
 
+conformeR <img src="man/figures/logo.png" align="right" height="139" alt="" />
+
 ## Installation
 
 `conformeR` is available from Bioconductor:
